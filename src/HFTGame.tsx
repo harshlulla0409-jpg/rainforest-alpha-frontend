@@ -256,9 +256,10 @@ export default function HFTGame() {
 
   // ── Strategy Polling ───────────────────────────────────────────────────────
   const fetchUserStrategies = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user) return;
+    const currentUserId = user.id || (user as any)._id || (user as any).username || (user as any).login || "anonymous_user";
     try {
-      const res = await fetch(`${BASE_URL}/api/strategies?userId=${user.id}`);
+      const res = await fetch(`${BASE_URL}/api/strategies?userId=${currentUserId}`);
       if (res.ok) {
         const data = await res.json();
         setSavedStrategies(data.strategies || []);
@@ -484,7 +485,8 @@ export default function HFTGame() {
     setIsRegressionLoading(true);
     setApiError(null);
     try {
-      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName, user?.id);
+      const currentUserId = user?.id || (user as any)?._id || (user as any)?.username || (user as any)?.login || "anonymous_user";
+      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName, currentUserId);
       setRegressionResults(data);
       setActiveModelData(data);
       setSaveStatus(null);
@@ -507,8 +509,12 @@ export default function HFTGame() {
     // DIAGNOSTIC 1: Confirm the click action successfully registers
     alert("Save button clicked! Beginning payload validation...");
 
-    if (!user?.id) {
-      alert("Save halted: user.id is missing or undefined.");
+    // The OAuth provider or local storage might not explicitly return `.id` depending on the backend schema. Fallback safely.
+    console.log("Current user state object:", user); // Check F12 Console to see exactly what keys your backend returned
+    
+    const currentUserId = user?.id || (user as any)?._id || (user as any)?.username || (user as any)?.login || "anonymous_user";
+    if (!currentUserId) {
+      alert("Save halted: user identity could not be resolved.");
       return;
     }
     
@@ -532,7 +538,7 @@ export default function HFTGame() {
       });
 
       const payload = {
-        userId: user.id,
+        userId: currentUserId,
         signalName: regressionName || "unnamed_signal",
         targetHorizon: regressionTarget || "r60",
         features: regressionFeatures || [],
