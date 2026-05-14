@@ -482,6 +482,7 @@ export default function HFTGame() {
         <button className="btn-primary btn-big" onClick={startGame} disabled={isLoading}>
           {isLoading ? "CONNECTING…" : "INITIALIZE SIMULATION"}
         </button>
+        <div className="disclaimer">For educational and research purposes only.</div>
       </div>
     );
   }
@@ -919,6 +920,7 @@ export default function HFTGame() {
           {isAuthenticating ? "AUTHENTICATING..." : "Sign in with GitHub"}
         </button>
         {apiError && <div className="error-box">⚠ {apiError}</div>}
+        <div className="disclaimer">For educational and research purposes only.</div>
       </div>
     );
   }
@@ -1012,6 +1014,8 @@ export default function HFTGame() {
         .intro-rules { display: flex; flex-direction: column; gap: 12px; max-width: 440px; width: 100%; }
         .rule { display: flex; align-items: flex-start; gap: 16px; text-align: left; padding: 12px 16px; background: rgba(46,204,113,0.04); border: 1px solid rgba(46,204,113,0.1); border-radius: 4px; font-size: 12px; color: #819985; }
         .rule-num { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #2ecc71; min-width: 28px; }
+
+        .disclaimer { font-size: 9px; color: #55735b; opacity: 0.7; max-width: 400px; line-height: 1.4; text-align: center; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
 
         .btn-primary, .btn-secondary, .btn-ghost, .btn-fire, .btn-xs, .btn-danger {
           cursor: pointer; border: none; font-family: 'Space Mono', monospace; transition: all 0.15s;
