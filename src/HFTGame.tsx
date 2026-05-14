@@ -64,7 +64,7 @@ const RETURN_HORIZONS = [
   { label: "1800s", key: "r1800" },
 ];
 
-const DEFAULT_BPS_THRESHOLDS = [-20, -10, -5, -2, 0, 2, 5, 10, 20];
+const DEFAULT_BPS_THRESHOLDS = [-20, -5, 0, 5, 20];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -125,12 +125,13 @@ export async function apiRunRegression(
   side: 1 | -1,
   features: string[],
   target: string,
-  name: string
+  name: string,
+  userId?: string
 ): Promise<RegressionResult> {
   const res = await fetch(`${BASE_URL}/api/regression`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dataset, side, features, target, name }),
+    body: JSON.stringify({ dataset, side, features, target, name, userId }),
   });
   if (!res.ok) throw new Error(`regression ${res.status}`);
   return res.json();
@@ -180,6 +181,12 @@ function getMetricConfig(id: string) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function HFTGame() {
+  const [user, setUser] = useState<{id: string, username: string, avatarUrl: string} | null>(() => {
+    const saved = localStorage.getItem("hft_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
   const [phase, setPhase] = useState<"intro" | "build" | "oos" | "results">("intro");
   const [meta, setMeta] = useState<{ isRows: number; oosRows: number } | null>(null);
 
@@ -218,6 +225,36 @@ export default function HFTGame() {
   const score = (currentStats.r60 * 1 + currentStats.r300 * 0.7 + currentStats.r1800 * 0.4) * directionMult;
   const coverage = meta && currentStats.n > 0 ? (currentStats.n / meta.isRows) * 100 : 0;
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    
+    if (code) {
+      setIsAuthenticating(true);
+      // Clear the query parameters from the URL safely
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      fetch(`${BASE_URL}/api/auth/github`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Auth failed");
+        return res.json();
+      })
+      .then(data => {
+        const userObj = data.user || data;
+        setUser(userObj);
+        localStorage.setItem("hft_user", JSON.stringify(userObj));
+      })
+      .catch(err => {
+        setApiError("Authentication failed. Please try again.");
+      })
+      .finally(() => setIsAuthenticating(false));
+    }
+  }, []);
+
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   // If direction is swapped midway, flush out the build stack
@@ -251,6 +288,15 @@ export default function HFTGame() {
   }, [editingState, pendingAlpha, pendingThresholds, directionMult, refreshPreview]);
 
   // ── Game flow ──────────────────────────────────────────────────────────────
+
+  const handleLogin = () => {
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${import.meta.env.VITE_GITHUB_CLIENT_ID}&scope=user`;
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("hft_user");
+  };
 
   async function startGame() {
     setIsLoading(true);
@@ -388,7 +434,7 @@ export default function HFTGame() {
     setIsRegressionLoading(true);
     setApiError(null);
     try {
-      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName);
+      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName, user?.id);
       setRegressionResults(data);
       
       if (!availableAlphas.find((a) => a.id === regressionName)) {
@@ -861,6 +907,22 @@ export default function HFTGame() {
     );
   }
 
+  function renderLogin() {
+    return (
+      <div className="login-screen">
+        <h1 className="login-title">HFT Alpha Bucketer Studio</h1>
+        <p className="login-desc">Connect your profile to build, regress, and archive algorithmic trading strategies.</p>
+        <button className="btn-github" onClick={handleLogin} disabled={isAuthenticating}>
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+          {isAuthenticating ? "AUTHENTICATING..." : "Sign in with GitHub"}
+        </button>
+        {apiError && <div className="error-box">⚠ {apiError}</div>}
+      </div>
+    );
+  }
+
   function renderHUD() {
     if (phase === "intro") return null;
     return (
@@ -877,6 +939,15 @@ export default function HFTGame() {
               <div className="hud-stat"><span>Matched</span><span>{currentStats.n.toLocaleString()}</span></div>
               <div className="hud-stat"><span>Score</span><span style={{ color: pnlColor(score) }}>{score >= 0 ? "+" : ""}{score.toFixed(2)}</span></div>
             </>
+          )}
+          {user && (
+            <div className="hud-user">
+              <img src={user.avatarUrl} alt="Avatar" className="hud-avatar" />
+              <div className="hud-user-info">
+                <span className="hud-username">{user.username}</span>
+                <button className="hud-logout" onClick={handleLogout}>Sign Out</button>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -1091,6 +1162,21 @@ export default function HFTGame() {
         .verdict.bad { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); color: #e74c3c; }
         .results-btns { display: flex; gap: 12px; }
 
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; padding: 40px 24px; text-align: center; }
+        .login-title { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 800; letter-spacing: 4px; color: #2ecc71; }
+        .login-desc { font-size: 14px; color: #819985; max-width: 400px; line-height: 1.6; }
+        .btn-github { display: flex; align-items: center; gap: 12px; padding: 12px 24px; font-size: 14px; font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 1px; background: #2ea44f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .btn-github:hover:not(:disabled) { background: #2c974b; }
+        .btn-github:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-github svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .hud-user { display: flex; align-items: center; gap: 12px; border-left: 1px solid rgba(46,204,113,0.2); padding-left: 20px; margin-left: 8px; }
+        .hud-avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #2ecc71; }
+        .hud-user-info { display: flex; flex-direction: column; align-items: flex-end; }
+        .hud-username { font-size: 11px; color: #cce3ce; font-weight: 700; }
+        .hud-logout { font-size: 9px; color: #819985; background: none; border: none; cursor: pointer; padding: 0; margin-top: 2px; font-family: inherit; }
+        .hud-logout:hover { color: #e74c3c; }
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(46,204,113,0.2); border-radius: 2px; }
@@ -1103,11 +1189,15 @@ export default function HFTGame() {
         }
       `}</style>
       <div className="game-root">
-        {renderHUD()}
-        {phase === "intro"   && renderIntro()}
-        {phase === "build"   && renderBuild()}
-        {phase === "oos"     && renderOOS()}
-        {phase === "results" && renderResults()}
+        {!user ? renderLogin() : (
+          <>
+            {renderHUD()}
+            {phase === "intro"   && renderIntro()}
+            {phase === "build"   && renderBuild()}
+            {phase === "oos"     && renderOOS()}
+            {phase === "results" && renderResults()}
+          </>
+        )}
       </div>
     </>
   );
