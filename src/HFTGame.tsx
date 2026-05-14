@@ -65,6 +65,7 @@ const RETURN_HORIZONS = [
 ];
 
 const DEFAULT_BPS_THRESHOLDS = [-20, -5, 0, 5, 20];
+const MIN_SAVING_THRESHOLD = 20.0;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,9 @@ type RegressionResult = {
   intercept: number;
   coefficients: Record<string, number>;
   rSquared: number;
+  oosRSquared?: number;
+  hasSufficientCoverage?: boolean;
+  oosBucketData?: any;
 };
 
 type OOSResults = {
@@ -134,6 +138,15 @@ export async function apiRunRegression(
     body: JSON.stringify({ dataset, side, features, target, name, userId }),
   });
   if (!res.ok) throw new Error(`regression ${res.status}`);
+  return res.json();
+}
+
+export async function apiSaveStrategy(payload: any) {
+  const res = await fetch(`${BASE_URL}/api/strategies/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
   return res.json();
 }
 
@@ -208,6 +221,13 @@ export default function HFTGame() {
   const [regressionResults, setRegressionResults] = useState<RegressionResult | null>(null);
   const [isRegressionLoading, setIsRegressionLoading] = useState(false);
 
+  const [activeModelData, setActiveModelData] = useState<any | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{success?: boolean; message?: string} | null>(null);
+  
+  const [workspaceGlow, setWorkspaceGlow] = useState(false);
+  const [savedStrategies, setSavedStrategies] = useState<any[]>([]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -224,6 +244,24 @@ export default function HFTGame() {
   const directionMult = gameDirection === "long" ? 1 : -1;
   const score = (currentStats.r60 * 1 + currentStats.r300 * 0.7 + currentStats.r1800 * 0.4) * directionMult;
   const coverage = meta && currentStats.n > 0 ? (currentStats.n / meta.isRows) * 100 : 0;
+
+  // ── Strategy Polling ───────────────────────────────────────────────────────
+  const fetchUserStrategies = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/strategies?userId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSavedStrategies(data.strategies || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch strategies", e);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUserStrategies();
+  }, [fetchUserStrategies]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -312,6 +350,8 @@ export default function HFTGame() {
       setRegressionTarget("r60");
       setRegressionName("custom_alpha");
       setRegressionResults(null);
+      setActiveModelData(null);
+      setSaveStatus(null);
       setPendingAlpha(INITIAL_ALPHAS[0].id);
       setPendingThresholds([...DEFAULT_BPS_THRESHOLDS]);
       setThresholdInput(DEFAULT_BPS_THRESHOLDS.join(", "));
@@ -399,6 +439,7 @@ export default function HFTGame() {
     setPhase("oos");
     setOosProgress(0);
     setApiError(null);
+    setSaveStatus(null);
 
     // Fire OOS API call immediately — animate in parallel
     const isFilterStage = filters.length > 0;
@@ -436,6 +477,8 @@ export default function HFTGame() {
     try {
       const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName, user?.id);
       setRegressionResults(data);
+      setActiveModelData(data);
+      setSaveStatus(null);
       
       if (!availableAlphas.find((a) => a.id === regressionName)) {
         setAvailableAlphas((prev) => [...prev, {
@@ -448,6 +491,89 @@ export default function HFTGame() {
       setApiError(String(e));
     } finally {
       setIsRegressionLoading(false);
+    }
+  }
+
+  async function handleSaveStrategy() {
+    if (!user?.id) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+
+    const activeWorkspaceLevels = [...levels, ...filters].map(filter => ({
+      alphaId: filter.alphaId,
+      thresholds: filter.thresholds,
+      selectedBuckets: filter.selectedBuckets
+    }));
+
+    const payload = {
+      userId: user.id,
+      signalName: regressionName,
+      targetHorizon: regressionTarget,
+      features: regressionFeatures,
+      isRSquared: activeModelData?.rSquared ?? 0,
+      oosRSquared: activeModelData?.oosRSquared ?? 0,
+      intercept: activeModelData?.intercept ?? 0,
+      coefficients: activeModelData?.coefficients ?? {},
+      oosBucketData: activeModelData?.oosBucketData ?? {},
+      activeWorkspaceLevels
+    };
+
+    try {
+      await apiSaveStrategy(payload);
+      setSaveStatus({ success: true, message: "Strategy successfully exported to cloud!" });
+      fetchUserStrategies(); // Refresh the Vault dynamically 
+    } catch (e) {
+      setSaveStatus({ success: false, message: String(e) || "Error saving strategy" });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function loadWorkspace(strategy: any) {
+    setIsLoading(true);
+    setApiError(null);
+    setPhase("build");
+    setOosResults(null);
+    setRegressionTarget(strategy.targetHorizon || "r60");
+    setRegressionFeatures(strategy.features || []);
+    setRegressionName((strategy.signalName || "loaded_signal") + "_v2");
+
+    try {
+      let currentLevels: Level[] = [];
+      let currentFilters: Level[] = [];
+
+      for (const lvl of strategy.activeWorkspaceLevels || []) {
+        const isFilter = INITIAL_FILTERS.some(f => f.id === lvl.alphaId);
+        const upstream = isFilter
+          ? [...currentLevels.map(l => ({alphaId: l.alphaId, thresholds: l.thresholds, selectedBuckets: l.selectedBuckets})), ...currentFilters.map(l => ({alphaId: l.alphaId, thresholds: l.thresholds, selectedBuckets: l.selectedBuckets}))]
+          : currentLevels.map(l => ({alphaId: l.alphaId, thresholds: l.thresholds, selectedBuckets: l.selectedBuckets}));
+
+        // Sequentially rebuild the distribution slices
+        const data = await apiFetchBuckets("is", directionMult as 1 | -1, lvl.alphaId, lvl.thresholds, upstream);
+        
+        const fullLvl: Level = {
+          alphaId: lvl.alphaId,
+          thresholds: lvl.thresholds,
+          selectedBuckets: lvl.selectedBuckets || [],
+          buckets: data.buckets,
+          filteredRows: data.filteredRows,
+          totalRows: data.totalRows,
+        };
+        
+        if (isFilter) currentFilters.push(fullLvl);
+        else currentLevels.push(fullLvl);
+      }
+      
+      setLevels(currentLevels);
+      setFilters(currentFilters);
+      setActiveModelData(strategy);
+      
+      setWorkspaceGlow(true);
+      setTimeout(() => setWorkspaceGlow(false), 1500);
+    } catch (e) {
+      setApiError("Failed to load workspace: " + String(e));
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -632,7 +758,7 @@ export default function HFTGame() {
 
     return (
       <div className="build-screen">
-        <div className="build-left">
+        <div className={`build-left ${workspaceGlow ? "workspace-glow" : ""}`}>
           <div className="build-header">
             <div className="build-title">STRATEGY BUILDER</div>
             <div className="build-subtitle">IN-SAMPLE · {meta?.isRows.toLocaleString() ?? "—"} EVENTS</div>
@@ -669,8 +795,42 @@ export default function HFTGame() {
           )}
         </div>
 
-        <div className="build-right">
-          <div className="stats-panel">
+        <div className={`build-right ${workspaceGlow ? "workspace-glow" : ""}`}>
+          {/* STRATEGY VAULT */}
+          <div className="stats-panel flex flex-col gap-3">
+            <div className="stats-title flex justify-between items-center">
+              <span>📂 STRATEGY VAULT</span>
+              <span className="text-[#55735b] text-[9px]">{savedStrategies.length} ARCHIVED</span>
+            </div>
+            {savedStrategies.length === 0 ? (
+              <div className="text-[9px] text-[#55735b] italic p-2 bg-black/20 rounded border border-[#2ecc71]/10">
+                No archived strategies linked to this account yet.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+                {savedStrategies.map((strat, i) => (
+                  <div key={i} className="p-2.5 bg-black/40 border border-[#2ecc71]/20 rounded flex flex-col gap-2 group transition-colors hover:border-[#2ecc71]/40">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[11px] font-bold text-[#2ecc71] max-w-[120px] truncate" title={strat.signalName}>{strat.signalName}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded">{strat.targetHorizon}</span>
+                    </div>
+                    <div className="flex gap-4 text-[9px]">
+                       <div className="flex flex-col"><span className="text-[#55735b]">IS R²</span><span className="text-[#cce3ce]">{(strat.isRSquared * 100).toFixed(1)}%</span></div>
+                       <div className="flex flex-col"><span className="text-[#55735b]">OOS R²</span><span className="text-[#f1c40f] font-bold">{(strat.oosRSquared || 0).toFixed(1)}%</span></div>
+                    </div>
+                    <div className="text-[8px] text-[#819985] line-clamp-2 leading-relaxed">
+                      Features: {(strat.features || []).join(", ")}
+                    </div>
+                    <button className="btn-secondary w-full py-1.5 mt-1 text-[9px] bg-[#2ecc71]/5 border-[#2ecc71]/30 hover:bg-[#2ecc71]/20" onClick={() => loadWorkspace(strat)}>
+                      ⚡ LOAD INTO WORKSPACE
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="stats-panel mt-4">
             <div className="stats-title">CURRENT RULE</div>
             <div className="stats-row">
               <span className="stats-label">Depth</span>
@@ -754,12 +914,15 @@ export default function HFTGame() {
               {isRegressionLoading ? "RUNNING..." : "RUN OLS REGRESSION"}
             </button>
 
-            {regressionResults && (
+            {activeModelData && (
               <div className="mt-2 pt-3 border-t border-[#2ecc71]/10 text-[10px] flex flex-col gap-1 text-[#cce3ce]">
-                <div className="flex justify-between text-[#819985]"><span>R-Squared</span> <span className="text-[#cce3ce]">{(regressionResults.rSquared * 100).toFixed(2)}%</span></div>
-                <div className="flex justify-between text-[#819985]"><span>Intercept</span> <span className="text-[#cce3ce]">{regressionResults.intercept.toFixed(4)}</span></div>
+                <div className="flex justify-between text-[#819985]"><span>IS R-Squared</span> <span className="text-[#cce3ce]">{(activeModelData.rSquared * 100).toFixed(2)}%</span></div>
+                {activeModelData.oosRSquared !== undefined && (
+                  <div className="flex justify-between text-[#819985]"><span>OOS R-Squared</span> <span className="text-[#f1c40f]">{activeModelData.oosRSquared.toFixed(1)}%</span></div>
+                )}
+                <div className="flex justify-between text-[#819985]"><span>Intercept</span> <span className="text-[#cce3ce]">{activeModelData.intercept.toFixed(4)}</span></div>
                 <div className="text-[#55735b] mt-2 mb-1 border-b border-[#2ecc71]/10 pb-1">Coefficients</div>
-                {Object.entries(regressionResults.coefficients).map(([k, v]) => (
+                {Object.entries(activeModelData.coefficients || {}).map(([k, v]: [string, any]) => (
                   <div key={k} className="flex justify-between items-center">
                     <span className="text-[#819985] text-[9px] truncate max-w-[100px]" title={k}>{k}</span>
                     <span className={v >= 0 ? "text-[#27ae60]" : "text-[#e74c3c]"}>{v >= 0 ? '+' : ''}{v.toFixed(4)}</span>
@@ -814,11 +977,11 @@ export default function HFTGame() {
     const overfitRatio = isGoodIS ? oosScore / score : 0;
 
     let grade: string, gradeColor: string;
-    if (oosScore > 2)       { grade = "S"; gradeColor = "#27ae60"; }
-    else if (oosScore > 1)  { grade = "A"; gradeColor = "#2ecc71"; }
+    if (oosScore > 20)       { grade = "S"; gradeColor = "#27ae60"; }
+    else if (oosScore > 10)  { grade = "A"; gradeColor = "#2ecc71"; }
     else if (oosScore > 0)  { grade = "B"; gradeColor = "#a4b595"; }
-    else if (oosScore > -1) { grade = "C"; gradeColor = "#f1c40f"; }
-    else if (oosScore > -2) { grade = "D"; gradeColor = "#e67e22"; }
+    else if (oosScore > -10) { grade = "C"; gradeColor = "#f1c40f"; }
+    else if (oosScore > -20) { grade = "D"; gradeColor = "#e67e22"; }
     else                    { grade = "F"; gradeColor = "#e74c3c"; }
 
     return (
@@ -900,8 +1063,30 @@ export default function HFTGame() {
           )}
         </div>
 
+        <div className="mt-4 pt-4 border-t border-[#2ecc71]/20 w-full">
+          {oosScore >= MIN_SAVING_THRESHOLD ? (
+            <div className="flex flex-col gap-2 mb-4">
+              <button className="btn-primary w-full flex justify-center items-center py-3 text-[14px]" onClick={handleSaveStrategy} disabled={isSaving || saveStatus?.success}>
+                {isSaving ? "SAVING..." : saveStatus?.success ? "✓ STRATEGY ARCHIVED TO CLOUD" : "🚀 EXPORT & SAVE STRATEGY TO CLOUD"}
+              </button>
+              {saveStatus && (
+                <div className={`p-2 text-center rounded ${saveStatus.success ? 'bg-[#27ae60]/20 text-[#2ecc71] border border-[#27ae60]/30' : 'bg-[#e74c3c]/20 text-[#e74c3c] border border-[#e74c3c]/30'}`}>
+                  {saveStatus.message}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-3 mb-4 bg-black/40 border border-[#e74c3c]/30 rounded flex flex-col gap-1">
+              <span className="text-[#e74c3c] font-bold text-[11px]">🔒 Archive Locked</span>
+              <span className="text-[#819985] text-[9px] leading-relaxed">
+                Out-of-Sample backtest score ({oosScore.toFixed(2)}) must exceed the minimum target threshold benchmark constraint of {MIN_SAVING_THRESHOLD.toFixed(1)} to unlock cloud table pushing pipelines.
+              </span>
+            </div>
+          )}
+        </div>
+
         <div className="results-btns">
-          <button className="btn-primary" onClick={() => { setPhase("build"); setOosResults(null); }}>REFINE STRATEGY</button>
+          <button className="btn-primary" onClick={() => { setPhase("build"); setOosResults(null); setSaveStatus(null); }}>REFINE STRATEGY</button>
           <button className="btn-ghost" onClick={startGame}>NEW SIMULATION</button>
         </div>
       </div>
@@ -1065,8 +1250,9 @@ export default function HFTGame() {
         .error-box { padding: 10px 14px; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 4px; font-size: 10px; color: #e95e4f; max-width: 440px; width: 100%; }
 
         .build-screen { display: flex; gap: 0; min-height: calc(100vh - 49px); }
-        .build-left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 49px; max-height: calc(100vh - 49px); overflow-y: auto; }
+        .build-left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; transition: box-shadow 0.4s ease; }
+        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 49px; max-height: calc(100vh - 49px); overflow-y: auto; transition: box-shadow 0.4s ease; }
+        .build-left.workspace-glow, .build-right.workspace-glow { box-shadow: inset 0 0 40px rgba(46,204,113,0.15), 0 0 20px rgba(46,204,113,0.1), inset 0 0 0 1px rgba(46,204,113,0.8); }
         .build-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #2ecc71; }
         .build-subtitle { font-size: 9px; letter-spacing: 2px; color: #55735b; margin-top: 2px; }
 
