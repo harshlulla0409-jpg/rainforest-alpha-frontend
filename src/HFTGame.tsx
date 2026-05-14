@@ -504,41 +504,66 @@ export default function HFTGame() {
   }
 
   async function handleSaveStrategy() {
-    if (!user?.id) return;
+    // DIAGNOSTIC 1: Confirm the click action successfully registers
+    alert("Save button clicked! Beginning payload validation...");
+
+    if (!user?.id) {
+      alert("Save halted: user.id is missing or undefined.");
+      return;
+    }
+    
     setIsSaving(true);
     setSaveStatus(null);
     
-    const activeWorkspaceLevels = [...levels, ...filters].map(filter => ({ 
-      alphaId: filter.alphaId, 
-      thresholds: filter.thresholds || [], 
-      selectedBuckets: filter.selectedBuckets || [] 
-    }));
-
-    let currentOosScore = 0;
-    if (oosResults) {
-      currentOosScore = (oosResults.stats.r60 * 1 + oosResults.stats.r300 * 0.7 + oosResults.stats.r1800 * 0.4) * directionMult;
-    }
-
-    const payload = {
-      userId: user.id,
-      signalName: regressionName,
-      targetHorizon: regressionTarget,
-      features: regressionFeatures,
-      isRSquared: activeModelData?.rSquared ?? 0, 
-      oosRSquared: activeModelData?.oosRSquared ?? 0,
-      oosScore: currentOosScore,
-      intercept: activeModelData?.intercept ?? 0,
-      coefficients: activeModelData?.coefficients ?? {},
-      oosBucketData: activeModelData?.oosBucketData ?? [], 
-      activeWorkspaceLevels
-    };
-
     try {
+      // DIAGNOSTIC 2: Validate the active filter state arrays exist
+      const activeFilters = typeof upstreamFilters !== 'undefined' ? upstreamFilters : [];
+      
+      // Check if the loop variables or internal properties are causing a mapping crash
+      const activeWorkspaceLevels = activeFilters.map((filter, index) => {
+        if (!filter) {
+          console.error(`Filter at index ${index} is null or undefined`);
+        }
+        return { 
+          alphaId: filter?.alphaId || "unknown_alpha", 
+          thresholds: filter?.thresholds || [], 
+          selectedBuckets: filter?.selectedBuckets || [] 
+        };
+      });
+
+      const payload = {
+        userId: user.id,
+        signalName: regressionName || "unnamed_signal",
+        targetHorizon: regressionTarget || "r60",
+        features: regressionFeatures || [],
+        isRSquared: activeModelData?.isRSquared ?? activeModelData?.rSquared ?? 0, 
+        oosRSquared: activeModelData?.oosRSquared ?? 0,
+        intercept: activeModelData?.intercept ?? 0,
+        coefficients: activeModelData?.coefficients ?? {},
+        oosBucketData: activeModelData?.oosBucketData ?? [], 
+        activeWorkspaceLevels
+      };
+
+      // DIAGNOSTIC 3: Log the built object right before dispatching fetch
+      console.log("Built Payload Object successfully:", payload);
+
       const res = await apiSaveStrategy(payload);
-      setSaveStatus({ success: true, message: res?.message || "Strategy successfully exported to cloud!" });
-      fetchUserStrategies(); // Refresh the Vault dynamically
-    } catch (e) {
-      setSaveStatus({ success: false, message: e instanceof Error ? e.message : String(e) });
+      console.log("Server Network Response:", res);
+      
+      if (res && res.status === "success") {
+        alert("Success! Server accepted the save transaction.");
+        setSaveStatus({ success: true, message: res.message || "Strategy exported successfully!" });
+        if (typeof fetchUserStrategies === 'function') {
+          fetchUserStrategies(); 
+        }
+      } else {
+        setSaveStatus({ success: false, message: res?.message || "Server rejected the save transaction." });
+      }
+    } catch (e: any) {
+      // DIAGNOSTIC 4: Force a browser alert display of the exact crash trace line
+      console.error("CRITICAL EXCEPTION IN HANDLER:", e);
+      alert(`FRONTEND EXCEPTION CAUGHT: ${e.message}\nStack: ${e.stack}`);
+      setSaveStatus({ success: false, message: `Frontend Crash: ${String(e)}` });
     } finally {
       setIsSaving(false);
     }
