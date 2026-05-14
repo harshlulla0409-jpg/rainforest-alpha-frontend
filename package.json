@@ -6,8 +6,10 @@
   "engines": {
     "node": "20.x"
   },
-  "packageManager": "pnpm@10.11.0",
-  "scripts": {
+  {
+  "packageManager": "pnpm@10.11.0"
+  },
+ "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
