@@ -147,7 +147,16 @@ export async function apiSaveStrategy(payload: any) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  return res.json();
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(errText || `Failed to save strategy (Status: ${res.status})`);
+  }
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    return { message: text };
+  }
 }
 
 // ── Stat helpers ──────────────────────────────────────────────────────────────
@@ -505,32 +514,31 @@ export default function HFTGame() {
       selectedBuckets: filter.selectedBuckets || [] 
     }));
 
+    let currentOosScore = 0;
+    if (oosResults) {
+      currentOosScore = (oosResults.stats.r60 * 1 + oosResults.stats.r300 * 0.7 + oosResults.stats.r1800 * 0.4) * directionMult;
+    }
+
     const payload = {
       userId: user.id,
       signalName: regressionName,
       targetHorizon: regressionTarget,
       features: regressionFeatures,
-      // THE FIX: Use activeModelData.isRSquared to match Python schemas
-      isRSquared: activeModelData?.isRSquared ?? 0, 
+      isRSquared: activeModelData?.rSquared ?? 0, 
       oosRSquared: activeModelData?.oosRSquared ?? 0,
+      oosScore: currentOosScore,
       intercept: activeModelData?.intercept ?? 0,
       coefficients: activeModelData?.coefficients ?? {},
-      // THE FIX: Fallback to an empty Array [] instead of an Object {}
       oosBucketData: activeModelData?.oosBucketData ?? [], 
       activeWorkspaceLevels
     };
 
     try {
       const res = await apiSaveStrategy(payload);
-      // Handle the explicit text response from the API server
-      if (res.status === "success") {
-        setSaveStatus({ success: true, message: res.message || "Strategy successfully exported to cloud!" });
-        fetchUserStrategies(); // Refresh the Vault dynamically
-      } else {
-        setSaveStatus({ success: false, message: res.message || "Server error while saving." });
-      }
+      setSaveStatus({ success: true, message: res?.message || "Strategy successfully exported to cloud!" });
+      fetchUserStrategies(); // Refresh the Vault dynamically
     } catch (e) {
-      setSaveStatus({ success: false, message: String(e) || "Error saving strategy" });
+      setSaveStatus({ success: false, message: e instanceof Error ? e.message : String(e) });
     } finally {
       setIsSaving(false);
     }
