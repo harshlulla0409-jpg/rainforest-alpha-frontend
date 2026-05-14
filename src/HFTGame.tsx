@@ -498,11 +498,11 @@ export default function HFTGame() {
     if (!user?.id) return;
     setIsSaving(true);
     setSaveStatus(null);
-
-    const activeWorkspaceLevels = [...levels, ...filters].map(filter => ({
-      alphaId: filter.alphaId,
-      thresholds: filter.thresholds,
-      selectedBuckets: filter.selectedBuckets
+    
+    const activeWorkspaceLevels = [...levels, ...filters].map(filter => ({ 
+      alphaId: filter.alphaId, 
+      thresholds: filter.thresholds || [], 
+      selectedBuckets: filter.selectedBuckets || [] 
     }));
 
     const payload = {
@@ -510,24 +510,32 @@ export default function HFTGame() {
       signalName: regressionName,
       targetHorizon: regressionTarget,
       features: regressionFeatures,
-      isRSquared: activeModelData?.rSquared ?? 0,
+      // THE FIX: Use activeModelData.isRSquared to match Python schemas
+      isRSquared: activeModelData?.isRSquared ?? 0, 
       oosRSquared: activeModelData?.oosRSquared ?? 0,
       intercept: activeModelData?.intercept ?? 0,
       coefficients: activeModelData?.coefficients ?? {},
-      oosBucketData: activeModelData?.oosBucketData ?? {},
+      // THE FIX: Fallback to an empty Array [] instead of an Object {}
+      oosBucketData: activeModelData?.oosBucketData ?? [], 
       activeWorkspaceLevels
     };
 
     try {
-      await apiSaveStrategy(payload);
-      setSaveStatus({ success: true, message: "Strategy successfully exported to cloud!" });
-      fetchUserStrategies(); // Refresh the Vault dynamically 
+      const res = await apiSaveStrategy(payload);
+      // Handle the explicit text response from the API server
+      if (res.status === "success") {
+        setSaveStatus({ success: true, message: res.message || "Strategy successfully exported to cloud!" });
+        fetchUserStrategies(); // Refresh the Vault dynamically
+      } else {
+        setSaveStatus({ success: false, message: res.message || "Server error while saving." });
+      }
     } catch (e) {
       setSaveStatus({ success: false, message: String(e) || "Error saving strategy" });
     } finally {
       setIsSaving(false);
     }
   }
+
 
   async function loadWorkspace(strategy: any) {
     setIsLoading(true);
