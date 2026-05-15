@@ -522,18 +522,13 @@ export default function HFTGame() {
     setSaveStatus(null);
     
     try {
-      // DIAGNOSTIC 2: Validate the active filter state arrays exist
-      const activeFilters = typeof upstreamFilters !== 'undefined' ? upstreamFilters : [];
-      
-      // Check if the loop variables or internal properties are causing a mapping crash
-      const activeWorkspaceLevels = activeFilters.map((filter, index) => {
-        if (!filter) {
-          console.error(`Filter at index ${index} is null or undefined`);
-        }
+      const activeFilters = [...levels, ...filters];
+
+      const activeWorkspaceLevels = activeFilters.map((filter) => {
         return { 
-          alphaId: filter?.alphaId || "unknown_alpha", 
-          thresholds: filter?.thresholds || [], 
-          selectedBuckets: filter?.selectedBuckets || [] 
+          alphaId: filter.alphaId, 
+          thresholds: filter.thresholds || [], 
+          selectedBuckets: filter.selectedBuckets || [] 
         };
       });
 
