@@ -904,19 +904,21 @@ export default function HFTGame() {
             ) : (
               <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
                 {savedStrategies.map((strat, i) => (
-                  <div key={i} className="p-2.5 bg-black/40 border border-[#2ecc71]/20 rounded flex flex-col gap-2 group transition-colors hover:border-[#2ecc71]/40">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-bold text-[#2ecc71] max-w-[120px] truncate" title={strat.signalName}>{strat.signalName}</span>
-                      <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded">{strat.targetHorizon}</span>
-                    </div>
-                    <div className="flex gap-3 text-[9px] mt-1 bg-black/20 p-1.5 rounded border border-[#2ecc71]/10">
-                      <div className="flex flex-col">
-                        <span className="text-[#55735b]">SCORE</span>
-                        <span className={`font-bold ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>{strat.oosScore > 0 ? '+' : ''}{strat.oosScore != null ? strat.oosScore.toFixed(2) : "0.00"}</span>
+                  <div key={i} className="p-3 bg-black/40 border border-[#2ecc71]/20 rounded flex flex-col gap-2 group transition-colors hover:border-[#2ecc71]/40">
+                    <div className="flex justify-between items-start border-b border-[#2ecc71]/10 pb-2 mb-1">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[11px] font-bold text-[#2ecc71] max-w-[120px] truncate" title={strat.signalName}>{strat.signalName}</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded w-fit">{strat.targetHorizon}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[#55735b] text-[8px] tracking-widest">SCORE</span>
+                        <span className={`text-[12px] font-bold ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>
+                          {strat.oosScore > 0 ? '+' : ''}{strat.oosScore != null ? strat.oosScore.toFixed(2) : "0.00"}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1 mt-1 border-t border-[#2ecc71]/10 pt-2">
-                      <div className="text-[8px] text-[#55735b] uppercase tracking-widest mb-1">Rule Summary</div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-[8px] text-[#55735b] uppercase tracking-widest mb-0.5">Rule Summary</div>
                       {(() => {
                         let alphaCount = 0;
                         let filterCount = 0;
@@ -942,18 +944,18 @@ export default function HFTGame() {
                             }
                           }
                           return (
-                            <div key={idx} className="flex justify-between items-start text-[8px] leading-tight mb-0.5">
-                              <div className="flex gap-1">
-                                <span style={{ color: isFilter ? "#1abc9c" : "#2ecc71", fontWeight: "bold" }}>{prefix}{displayIdx}</span>
-                                <span className="text-[#819985]">{alphaName}</span>
+                            <div key={idx} className="flex justify-between items-center text-[9px] leading-tight mb-1">
+                              <div className="flex gap-1.5 items-center">
+                                <span className="px-1 py-0.5 rounded bg-black/30" style={{ color: isFilter ? "#1abc9c" : "#2ecc71", fontWeight: "bold", fontSize: "8px" }}>{prefix}{displayIdx}</span>
+                                <span className="text-[#819985] max-w-[80px] truncate" title={alphaName}>{alphaName}</span>
                               </div>
-                              <span className="text-[#55735b] text-right max-w-[90px] truncate" title={labels.join(", ")}>{labels.join(", ")}</span>
+                              <span className="text-[#cce3ce] text-right text-[8px] max-w-[80px] truncate" title={labels.join(", ")}>{labels.join(", ")}</span>
                             </div>
                           );
                         });
                       })()}
                     </div>
-                    <button className="w-full py-2 mt-1 text-[9px] font-mono tracking-widest text-[#819985] bg-transparent border border-transparent hover:text-[#2ecc71] hover:bg-[#2ecc71]/10 rounded transition-colors" onClick={() => loadWorkspace(strat)}>
+                    <button className="w-full py-1.5 mt-2 text-[9px] font-mono tracking-widest text-[#819985] bg-transparent border border-transparent hover:text-[#2ecc71] hover:bg-[#2ecc71]/10 rounded transition-colors" onClick={() => loadWorkspace(strat)}>
                       ⚡ LOAD INTO WORKSPACE
                     </button>
                   </div>
