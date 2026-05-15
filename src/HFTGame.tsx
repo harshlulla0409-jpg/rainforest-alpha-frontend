@@ -226,7 +226,7 @@ export function AmbientAudioToggle() {
         </svg>
       )}
       <span className="audio-label">
-        {isMuted ? 'CLICK FOR BIRDSONGS' : `BIRDS 0${currentTrackIndex + 1}`}
+        {isMuted ? 'BIRDSONGS' : `BIRDS 0${currentTrackIndex + 1}`}
       </span>
     </button>
   );
@@ -1242,8 +1242,12 @@ export default function HFTGame() {
     return (
       <div className="login-screen">
         <div className="login-glass-panel">
-          <h1 className="login-title">HFT Alpha Bucketer Studio</h1>
-          <p className="login-desc">Connect your profile to build, regress, and archive algorithmic trading strategies.</p>
+          <div className="intro-logo">
+            <span className="logo-hft">RAINFOREST</span>
+            <span className="logo-alpha">TRADING</span>
+            <span className="logo-bucket">SIMULATOR</span>
+          </div>
+          <p className="login-desc">Connect your profile to build, test, and save high frequency alphas and strategies.</p>
           <button className="btn-github" onClick={handleLogin} disabled={isAuthenticating}>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
@@ -1412,7 +1416,7 @@ export default function HFTGame() {
         .rule { display: flex; align-items: flex-start; gap: 16px; text-align: left; padding: 12px 16px; background: rgba(46,204,113,0.04); border: 1px solid rgba(46,204,113,0.1); border-radius: 4px; font-size: 12px; color: #819985; }
         .rule-num { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #2ecc71; min-width: 28px; }
 
-        .disclaimer { font-size: 9px; color: #55735b; opacity: 0.7; max-width: 400px; line-height: 1.4; text-align: center; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .disclaimer { font-size: 9px; color: #55735b; opacity: 0.7; max-width: 400px; line-height: 1.4; text-align: left; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
 
         .btn-primary, .btn-secondary, .btn-ghost, .btn-fire, .btn-xs, .btn-danger {
           cursor: pointer; border: none; font-family: 'Space Mono', monospace; transition: all 0.15s;
@@ -1638,9 +1642,9 @@ export default function HFTGame() {
         .verdict.bad { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); color: #e74c3c; }
         .results-btns { display: flex; gap: 12px; }
 
-        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; }
+        .login-screen { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 100vh; padding: 0 10%; text-align: left; }
         .login-glass-panel {
-          display: flex; flex-direction: column; align-items: center; gap: 24px;
+          display: flex; flex-direction: column; align-items: flex-start; gap: 32px;
           background: rgba(6, 15, 10, 0.45);
           backdrop-filter: blur(24px);
           -webkit-backdrop-filter: blur(24px);
@@ -1652,9 +1656,9 @@ export default function HFTGame() {
           animation: emergeFromFog 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           opacity: 0;
           transform: translateY(20px);
+          max-width: 800px;
         }
-        .login-title { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 800; letter-spacing: 4px; color: #2ecc71; }
-        .login-desc { font-size: 14px; color: #819985; max-width: 400px; line-height: 1.6; }
+        .login-desc { font-family: 'Space Mono', monospace; font-size: 12px; color: #819985; letter-spacing: 1px; max-width: 400px; line-height: 1.6; }
         .btn-github { display: flex; align-items: center; gap: 12px; padding: 12px 24px; font-size: 14px; font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 1px; background: #2ea44f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
         .btn-github:hover:not(:disabled) { background: #2c974b; }
         .btn-github:disabled { opacity: 0.7; cursor: not-allowed; }
