@@ -741,16 +741,27 @@ export default function HFTGame() {
         <div className="editor-title">{isNew ? `ADD ${type.toUpperCase()} ${idx + 1}` : `EDIT ${type.toUpperCase()} ${idx + 1}`}</div>
         <div className="editor-row">
           <label>{type === "alpha" ? "Alpha Signal" : "Filter Metric"}</label>
-          <div className="alpha-select-grid">
-            {sourceList.map((a) => (
-              <button
-                key={a.id}
-                className={`alpha-chip ${pendingAlpha === a.id ? "active" : ""}`}
-                onClick={() => setPendingAlpha(a.id)}
-                title={a.desc}
-              >
-                {a.label}
-              </button>
+          <div className="alpha-categories">
+            {Object.entries(sourceList.reduce((acc, a) => {
+              let cat = "OTHER";
+              if (type === "filter") cat = "FILTERS";
+              else if (a.id.includes('ofi') || a.id.includes('book') || a.id.includes('cancel') || a.id.includes('imbalance') || a.id.includes('replenish') || a.id.includes('bid') || a.id.includes('skew') || a.id.includes('taker')) cat = "ORDER BOOK DYNAMICS";
+              else if (a.id.includes('momentum') || a.id.includes('trend') || a.id.includes('strength') || a.id.includes('accel')) cat = "MOMENTUM & TREND";
+              else if (a.id.includes('vol') || a.id.includes('vpin') || a.id.includes('spoof') || a.id.includes('dispersion')) cat = "VOLATILITY & TOXICITY";
+              else if (a.id.includes('basis') || a.id.includes('divergence') || a.id.includes('fracture') || a.id.includes('vwap')) cat = "BASIS & DIVERGENCE";
+              else cat = "UNIFIED & LEAD SCORES";
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(a);
+              return acc;
+            }, {} as Record<string, typeof sourceList>)).map(([cat, alphas]) => (
+              <div key={cat} className="alpha-category">
+                <div className="alpha-category-title">{cat}</div>
+                <div className="alpha-select-grid">
+                  {alphas.map((a) => (
+                    <button key={a.id} className={`alpha-chip ${pendingAlpha === a.id ? "active" : ""}`} onClick={() => setPendingAlpha(a.id)} title={a.desc}>{a.label}</button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -832,8 +843,10 @@ export default function HFTGame() {
               
               {levels.length > 0 && (
                 <div className="mt-8 border-t border-[#2ecc71]/20 pt-6">
-                  <div className="build-title" style={{ fontSize: "16px", color: "#1abc9c" }}>FILTER LAYERS</div>
-                  <div className="build-subtitle mb-4">POST-ALPHA EXECUTION FILTERS</div>
+                  <div className="build-header mb-4">
+                    <div className="build-title" style={{ fontSize: "16px", color: "#1abc9c" }}>FILTER LAYERS</div>
+                    <div className="build-subtitle">POST-ALPHA EXECUTION FILTERS</div>
+                  </div>
                   {filters.map((lvl, idx) => renderBucketLevel(lvl, idx, "filter"))}
                   <div className="add-level-row">
                      <button className="btn-secondary" style={{ borderColor: "#1abc9c", color: "#1abc9c" }} onClick={() => addLevel("filter")}>+ ADD FILTER LAYER</button>
@@ -906,7 +919,7 @@ export default function HFTGame() {
                         });
                       })()}
                     </div>
-                    <button className="btn-secondary w-full py-1.5 mt-1 text-[9px] bg-[#2ecc71]/5 border-[#2ecc71]/30 hover:bg-[#2ecc71]/20" onClick={() => loadWorkspace(strat)}>
+                    <button className="w-full py-2 mt-1 text-[9px] font-mono tracking-widest text-[#819985] bg-transparent border border-transparent hover:text-[#2ecc71] hover:bg-[#2ecc71]/10 rounded transition-colors" onClick={() => loadWorkspace(strat)}>
                       ⚡ LOAD INTO WORKSPACE
                     </button>
                   </div>
@@ -1406,6 +1419,7 @@ export default function HFTGame() {
         .build-left:hover, .build-right:hover {
           background-color: rgba(2, 6, 4, 0.6);
         }
+        .build-header { padding: 0 24px; }
         .build-left.workspace-glow, .build-right.workspace-glow { box-shadow: inset 0 0 40px rgba(46,204,113,0.15), 0 0 20px rgba(46,204,113,0.1), inset 0 0 0 1px rgba(46,204,113,0.8); }
         .build-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 4px; color: #ffffff; }
         .build-subtitle { font-size: 9px; letter-spacing: 2px; color: #55735b; margin-top: 2px; }
@@ -1451,8 +1465,8 @@ export default function HFTGame() {
         .bucket-row.selected { background: rgba(39,174,96,0.05); border-left: 3px solid #27ae60; }
         .bucket-row.long:hover { background: rgba(39,174,96,0.04); }
         .bucket-row.short:hover { background: rgba(231,76,60,0.04); }
-        .bucket-label { font-family: 'Space Mono', monospace; font-size: 10px; color: #819985; letter-spacing: 0.5px; }
-        .bucket-n { font-size: 9px; color: #55735b; }
+        .bucket-label { font-family: 'Space Mono', monospace; font-size: 10px; color: #cce3ce; letter-spacing: 0.5px; }
+        .bucket-n { font-size: 9px; color: #819985; }
         .bucket-bars { display: flex; flex-direction: column; gap: 4px; }
         .bar-row { display: flex; align-items: center; gap: 6px; }
         .bar-label { font-size: 8px; color: #55735b; min-width: 28px; }
@@ -1463,7 +1477,7 @@ export default function HFTGame() {
         .bucket-select-indicator.on { color: #27ae60; border-color: rgba(39,174,96,0.4); background: rgba(39,174,96,0.08); }
         .bucket-select-indicator.off { color: #2a4a30; border-color: rgba(42,74,48,0.4); }
 
-        .add-level-row { padding: 16px 0 0; display: flex; justify-content: flex-start; }
+        .add-level-row { padding: 16px 24px 0; display: flex; justify-content: flex-start; }
         .max-depth-msg { font-size: 10px; color: #55735b; letter-spacing: 1px; }
         .hint-box { font-size: 11px; color: #55735b; padding: 12px; background: rgba(46,204,113,0.03); border: 1px dashed rgba(46,204,113,0.15); border-radius: 4px; text-align: center; line-height: 1.6; }
 
@@ -1489,18 +1503,20 @@ export default function HFTGame() {
         .editor-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 400; letter-spacing: 4px; color: #ffffff; margin-bottom: 16px; }
         .editor-row { margin-bottom: 14px; }
         .editor-row label { display: block; font-size: 9px; letter-spacing: 1px; color: #55735b; margin-bottom: 6px; }
+        .alpha-categories { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+        .alpha-category-title { font-size: 9px; font-family: 'Outfit', sans-serif; letter-spacing: 2px; color: #55735b; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; text-transform: uppercase; }
         .alpha-select-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-        .alpha-chip { padding: 5px 10px; font-size: 10px; background: rgba(46,204,113,0.05); border: 1px solid rgba(46,204,113,0.15); color: #819985; border-radius: 3px; cursor: pointer; transition: all 0.12s; }
-        .alpha-chip:hover { border-color: #2ecc71; color: #cce3ce; }
-        .alpha-chip.active { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; }
-        .threshold-input { width: 100%; padding: 8px 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(46,204,113,0.2); color: #cce3ce; font-family: 'Space Mono', monospace; font-size: 11px; border-radius: 3px; outline: none; }
-        .threshold-input:focus { border-color: #2ecc71; }
+        .alpha-chip { padding: 6px 12px; font-size: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #819985; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .alpha-chip:hover { border-color: rgba(46,204,113,0.4); color: #cce3ce; background: rgba(46,204,113,0.05); }
+        .alpha-chip.active { background: rgba(46,204,113,0.15); border-color: #2ecc71; color: #2ecc71; box-shadow: 0 0 10px rgba(46,204,113,0.1); }
+        .threshold-input { width: 100%; padding: 12px 16px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #cce3ce; font-family: 'Space Mono', monospace; font-size: 14px; border-radius: 4px; outline: none; transition: all 0.2s; }
+        .threshold-input:focus { border-color: #2ecc71; box-shadow: 0 0 20px rgba(46,204,113,0.15), inset 0 0 8px rgba(46,204,113,0.05); }
         .editor-preview { margin-bottom: 14px; }
         .preview-label { font-size: 9px; letter-spacing: 1px; color: #55735b; margin-bottom: 8px; }
         .preview-mini-buckets { display: flex; flex-direction: column; gap: 3px; max-height: 140px; overflow-y: auto; }
         .preview-bucket { display: flex; gap: 10px; font-size: 9px; padding: 3px 8px; background: rgba(0,0,0,0.2); border-radius: 2px; }
-        .preview-bucket-label { color: #819985; flex: 1; }
-        .preview-bucket-n { color: #55735b; min-width: 50px; }
+        .preview-bucket-label { color: #cce3ce; flex: 1; }
+        .preview-bucket-n { color: #819985; min-width: 50px; }
         .preview-bucket-ret { min-width: 70px; text-align: right; }
         .editor-btns { display: flex; gap: 10px; }
 
