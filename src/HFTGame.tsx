@@ -629,33 +629,35 @@ export default function HFTGame() {
   function renderIntro() {
     return (
       <div className="intro-screen">
-        <div className="intro-logo">
-          <span className="logo-hft">RAINFOREST</span>
-          <span className="logo-alpha">TRADING</span>
-          <span className="logo-bucket">SIMULATOR</span>
+        <div className="intro-glass-panel">
+          <div className="intro-logo">
+            <span className="logo-hft">RAINFOREST</span>
+            <span className="logo-alpha">TRADING</span>
+            <span className="logo-bucket">SIMULATOR</span>
+          </div>
+          <p className="intro-sub">Strategy research simulation · In-sample optimization · OOS validation</p>
+          <div className="intro-rules">
+            <div className="rule"><span className="rule-num">01</span><span>Choose an alpha signal & bucket by basis points of forward return</span></div>
+            <div className="rule"><span className="rule-num">02</span><span>Select buckets where the edge is in your favor</span></div>
+            <div className="rule"><span className="rule-num">03</span><span>Drill deeper with additional alpha layers</span></div>
+            <div className="rule"><span className="rule-num">04</span><span>Trade your rule on an unseen OOS day — see if it holds</span></div>
+          </div>
+          <div className="dir-selector">
+            <button 
+              className={`dir-btn long ${gameDirection === "long" ? "active" : ""}`} 
+              onClick={() => setGameDirection("long")}
+            >LONG STRATEGY</button>
+            <button 
+              className={`dir-btn short ${gameDirection === "short" ? "active" : ""}`} 
+              onClick={() => setGameDirection("short")}
+            >SHORT STRATEGY</button>
+          </div>
+          {apiError && <div className="error-box">⚠ {apiError}</div>}
+          <button className="btn-primary btn-big" onClick={startGame} disabled={isLoading}>
+            {isLoading ? "CONNECTING…" : "INITIALIZE SIMULATION"}
+          </button>
+          <div className="disclaimer">For educational and research purposes only.</div>
         </div>
-        <p className="intro-sub">Strategy research simulation · In-sample optimization · OOS validation</p>
-        <div className="intro-rules">
-          <div className="rule"><span className="rule-num">01</span><span>Choose an alpha signal & bucket by basis points of forward return</span></div>
-          <div className="rule"><span className="rule-num">02</span><span>Select buckets where the edge is in your favor</span></div>
-          <div className="rule"><span className="rule-num">03</span><span>Drill deeper with additional alpha layers</span></div>
-          <div className="rule"><span className="rule-num">04</span><span>Trade your rule on an unseen OOS day — see if it holds</span></div>
-        </div>
-        <div className="dir-selector">
-          <button 
-            className={`dir-btn long ${gameDirection === "long" ? "active" : ""}`} 
-            onClick={() => setGameDirection("long")}
-          >LONG STRATEGY</button>
-          <button 
-            className={`dir-btn short ${gameDirection === "short" ? "active" : ""}`} 
-            onClick={() => setGameDirection("short")}
-          >SHORT STRATEGY</button>
-        </div>
-        {apiError && <div className="error-box">⚠ {apiError}</div>}
-        <button className="btn-primary btn-big" onClick={startGame} disabled={isLoading}>
-          {isLoading ? "CONNECTING…" : "INITIALIZE SIMULATION"}
-        </button>
-        <div className="disclaimer">For educational and research purposes only.</div>
       </div>
     );
   }
@@ -1188,16 +1190,18 @@ export default function HFTGame() {
   function renderLogin() {
     return (
       <div className="login-screen">
-        <h1 className="login-title">HFT Alpha Bucketer Studio</h1>
-        <p className="login-desc">Connect your profile to build, regress, and archive algorithmic trading strategies.</p>
-        <button className="btn-github" onClick={handleLogin} disabled={isAuthenticating}>
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-          </svg>
-          {isAuthenticating ? "AUTHENTICATING..." : "Sign in with GitHub"}
-        </button>
-        {apiError && <div className="error-box">⚠ {apiError}</div>}
-        <div className="disclaimer">For educational and research purposes only.</div>
+        <div className="login-glass-panel">
+          <h1 className="login-title">HFT Alpha Bucketer Studio</h1>
+          <p className="login-desc">Connect your profile to build, regress, and archive algorithmic trading strategies.</p>
+          <button className="btn-github" onClick={handleLogin} disabled={isAuthenticating}>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
+            {isAuthenticating ? "AUTHENTICATING..." : "Sign in with GitHub"}
+          </button>
+          {apiError && <div className="error-box">⚠ {apiError}</div>}
+          <div className="disclaimer">For educational and research purposes only.</div>
+        </div>
       </div>
     );
   }
@@ -1209,7 +1213,15 @@ export default function HFTGame() {
         <div className="hud-left">
           <span className="hud-logo">RAINFOREST·TRADING</span>
           <span className={`hud-phase ${phase}`}>{phase.toUpperCase()}</span>
-          {phase !== "intro" && <span className={`hud-phase hud-dir ${gameDirection}`}>{gameDirection.toUpperCase()}</span>}
+          {phase !== "intro" && (
+            <button 
+              className={`hud-phase hud-dir ${gameDirection}`}
+              onClick={() => setGameDirection(prev => prev === "long" ? "short" : "long")}
+              title="Toggle Strategy Direction"
+            >
+              {gameDirection.toUpperCase()} ⇄
+            </button>
+          )}
         </div>
         <div className="hud-right">
           {phase === "build" && (
@@ -1296,14 +1308,29 @@ export default function HFTGame() {
 
         .intro-screen {
           display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-          min-height: calc(100vh - 80px); gap: 40px; padding: 0 10%; text-align: left;
+          min-height: calc(100vh - 80px); padding: 0 10%; text-align: left;
+        }
+        .intro-glass-panel {
+          display: flex; flex-direction: column; align-items: flex-start; gap: 32px;
+          background: rgba(6, 15, 10, 0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 64px;
+          box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+          animation: emergeFromFog 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: translateY(20px);
+          max-width: 800px;
         }
         .intro-logo {
           display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;
         }
         .logo-hft { font-family: 'Outfit', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 12px; color: #2ecc71; margin-bottom: 12px; }
         .logo-alpha, .logo-bucket { font-family: 'Outfit', sans-serif; font-weight: 200; font-size: 72px; letter-spacing: 8px; color: #ffffff; text-transform: uppercase; }
-        .intro-sub { font-family: 'Space Mono', monospace; font-size: 12px; color: #819985; letter-spacing: 1px; margin-top: 24px; max-width: 400px; line-height: 1.6; }
+        .intro-sub { font-family: 'Space Mono', monospace; font-size: 12px; color: #819985; letter-spacing: 1px; max-width: 400px; line-height: 1.6; }
         .intro-rules { display: flex; flex-direction: column; gap: 12px; max-width: 440px; width: 100%; }
         .rule { display: flex; align-items: flex-start; gap: 16px; text-align: left; padding: 12px 16px; background: rgba(46,204,113,0.04); border: 1px solid rgba(46,204,113,0.1); border-radius: 4px; font-size: 12px; color: #819985; }
         .rule-num { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #2ecc71; min-width: 28px; }
@@ -1357,13 +1384,15 @@ export default function HFTGame() {
         .btn-fire-main { font-size: 14px; font-weight: 700; letter-spacing: 3px; }
         .btn-fire-sub { font-size: 10px; letter-spacing: 1px; opacity: 0.8; margin-top: 4px; }
 
-        .dir-selector { display: flex; gap: 16px; margin: 10px 0 20px; }
+        .dir-selector { display: flex; gap: 16px; margin: 0; }
         .dir-btn { padding: 12px 24px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 2px; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.4); color: #819985; }
         .dir-btn.long.active { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); box-shadow: 0 0 16px rgba(46,204,113,0.2); }
         .dir-btn.short.active { border-color: #e74c3c; color: #e74c3c; background: rgba(231,76,60,0.1); box-shadow: 0 0 16px rgba(231,76,60,0.2); }
         .dir-btn:not(.active):hover { color: #cce3ce; background: rgba(255,255,255,0.05); }
         .hud-dir.long { color: #2ecc71; border-color: rgba(46,204,113,0.4); background: rgba(46,204,113,0.08); }
         .hud-dir.short { color: #e74c3c; border-color: rgba(231,76,60,0.4); background: rgba(231,76,60,0.08); }
+        .hud-dir { cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .hud-dir:hover { filter: brightness(1.2); transform: scale(1.05); }
 
         .error-box { padding: 10px 14px; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 4px; font-size: 10px; color: #e95e4f; max-width: 440px; width: 100%; }
 
@@ -1499,7 +1528,21 @@ export default function HFTGame() {
         .verdict.bad { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); color: #e74c3c; }
         .results-btns { display: flex; gap: 12px; }
 
-        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; padding: 40px 24px; text-align: center; }
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; }
+        .login-glass-panel {
+          display: flex; flex-direction: column; align-items: center; gap: 24px;
+          background: rgba(6, 15, 10, 0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 64px;
+          box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+          animation: emergeFromFog 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: translateY(20px);
+        }
         .login-title { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 800; letter-spacing: 4px; color: #2ecc71; }
         .login-desc { font-size: 14px; color: #819985; max-width: 400px; line-height: 1.6; }
         .btn-github { display: flex; align-items: center; gap: 12px; padding: 12px 24px; font-size: 14px; font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 1px; background: #2ea44f; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
