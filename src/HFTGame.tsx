@@ -1263,13 +1263,13 @@ export default function HFTGame() {
         .hud {
           position: sticky; top: 0; z-index: 100;
           display: flex; justify-content: space-between; align-items: center;
-          padding: 10px 24px;
-          background: rgba(6,18,8,0.92);
-          border-bottom: 1px solid rgba(46,204,113,0.2);
-          backdrop-filter: blur(8px);
+          padding: 20px 40px;
+          background: linear-gradient(to bottom, rgba(3, 8, 5, 0.9) 0%, rgba(3, 8, 5, 0.0) 100%);
+          border-bottom: none;
+          backdrop-filter: none;
         }
         .hud-left { display: flex; align-items: center; gap: 16px; }
-        .hud-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 2px; color: #2ecc71; }
+        .hud-logo { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 14px; letter-spacing: 6px; color: #fff; }
         .hud-phase { font-size: 10px; letter-spacing: 2px; padding: 2px 8px; border-radius: 2px; background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); }
         .hud-phase.build { color: #2ecc71; }
         .hud-phase.oos { color: #f1c40f; border-color: rgba(241,196,15,0.4); background: rgba(241,196,15,0.08); }
@@ -1280,17 +1280,15 @@ export default function HFTGame() {
         .hud-stat span:last-child { font-size: 13px; color: #cce3ce; }
 
         .intro-screen {
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          min-height: 100vh; gap: 40px; padding: 40px 24px; text-align: center;
+          display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+          min-height: calc(100vh - 80px); gap: 40px; padding: 0 10%; text-align: left;
         }
         .intro-logo {
-          display: flex; flex-direction: column; align-items: center; line-height: 1;
-          font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+          display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;
         }
-        .logo-hft { font-size: 14px; letter-spacing: 10px; color: #2ecc71; margin-bottom: 4px; }
-        .logo-alpha { font-size: 56px; letter-spacing: 6px; color: #ffffff; }
-        .logo-bucket { font-size: 16px; letter-spacing: 8px; color: #4a905a; margin-top: 4px; }
-        .intro-sub { font-size: 11px; color: #55735b; letter-spacing: 2px; }
+        .logo-hft { font-family: 'Outfit', sans-serif; font-weight: 400; font-size: 16px; letter-spacing: 12px; color: #2ecc71; margin-bottom: 12px; }
+        .logo-alpha, .logo-bucket { font-family: 'Outfit', sans-serif; font-weight: 200; font-size: 72px; letter-spacing: 8px; color: #ffffff; text-transform: uppercase; }
+        .intro-sub { font-family: 'Space Mono', monospace; font-size: 12px; color: #819985; letter-spacing: 1px; margin-top: 24px; max-width: 400px; line-height: 1.6; }
         .intro-rules { display: flex; flex-direction: column; gap: 12px; max-width: 440px; width: 100%; }
         .rule { display: flex; align-items: flex-start; gap: 16px; text-align: left; padding: 12px 16px; background: rgba(46,204,113,0.04); border: 1px solid rgba(46,204,113,0.1); border-radius: 4px; font-size: 12px; color: #819985; }
         .rule-num { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #2ecc71; min-width: 28px; }
@@ -1351,7 +1349,17 @@ export default function HFTGame() {
         .build-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #2ecc71; }
         .build-subtitle { font-size: 9px; letter-spacing: 2px; color: #55735b; margin-top: 2px; }
 
-        .level-card { background: rgba(46,204,113,0.03); border: 1px solid rgba(46,204,113,0.12); border-radius: 6px; overflow: hidden; }
+        .stats-panel, .level-card, .editor-panel, .result-card {
+          background: rgba(6, 15, 10, 0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 24px;
+          box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+        }
+        .level-card { overflow: hidden; }
         .level-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(46,204,113,0.06); border-bottom: 1px solid rgba(46,204,113,0.1); }
         .level-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: #2ecc71; min-width: 28px; }
         .filter-badge { color: #1abc9c; }
@@ -1387,7 +1395,6 @@ export default function HFTGame() {
         .max-depth-msg { font-size: 10px; color: #55735b; letter-spacing: 1px; }
         .hint-box { font-size: 11px; color: #55735b; padding: 12px; background: rgba(46,204,113,0.03); border: 1px dashed rgba(46,204,113,0.15); border-radius: 4px; text-align: center; line-height: 1.6; }
 
-        .stats-panel { background: rgba(46,204,113,0.03); border: 1px solid rgba(46,204,113,0.12); border-radius: 6px; padding: 14px; }
         .stats-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: #4a9062; margin-bottom: 10px; }
         .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 10px; }
         .stats-label { color: #55735b; }
@@ -1399,7 +1406,6 @@ export default function HFTGame() {
         .coverage-bar-wrap { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 10px; }
         .coverage-bar { height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); border-radius: 2px; transition: width 0.5s; }
 
-        .editor-panel { background: rgba(46,204,113,0.04); border: 1px solid rgba(46,204,113,0.2); border-radius: 6px; padding: 18px; }
         .editor-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 3px; color: #2ecc71; margin-bottom: 16px; }
         .editor-row { margin-bottom: 14px; }
         .editor-row label { display: block; font-size: 9px; letter-spacing: 1px; color: #55735b; margin-bottom: 6px; }
@@ -1433,7 +1439,6 @@ export default function HFTGame() {
         .results-title { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #cce3ce; }
         .results-sub { font-size: 10px; color: #55735b; letter-spacing: 2px; margin-top: 4px; }
         .results-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-        .result-card { padding: 16px; background: rgba(46,204,113,0.03); border: 1px solid rgba(46,204,113,0.12); border-radius: 6px; }
         .result-card.highlight { background: rgba(39,174,96,0.04); border-color: rgba(39,174,96,0.2); }
         .rc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: #4a9062; margin-bottom: 12px; }
         .rc-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(46,204,113,0.05); }
