@@ -1236,25 +1236,28 @@ export default function HFTGame() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-          background: #061208;
+          background: #030805;
           color: #cce3ce;
-          font-family: 'Space Mono', monospace;
+          font-family: 'Outfit', sans-serif; /* Changed default font */
           min-height: 100vh;
           overflow-x: hidden;
         }
 
         #root, .game-root {
           min-height: 100vh;
-          background: #061208;
-          background-image:
-            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(46,204,113,0.07) 0%, transparent 60%),
-            repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(46,204,113,0.03) 39px, rgba(46,204,113,0.03) 40px),
-            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(46,204,113,0.02) 39px, rgba(46,204,113,0.02) 40px);
+          /* The Background Image */
+          background-image: url('/forest-bg.jpg'); 
+          background-size: cover;
+          background-position: center;
+          background-attachment: fixed;
+          
+          /* The dark cinematic vignette to make panels readable */
+          box-shadow: inset 0 0 300px 150px rgba(2, 8, 4, 0.95);
         }
 
         .hud {
