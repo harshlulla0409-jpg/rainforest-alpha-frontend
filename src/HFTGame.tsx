@@ -1279,7 +1279,7 @@ export default function HFTGame() {
           position: fixed;
           top: -5%; left: -5%; right: -5%; bottom: -5%;
           z-index: -1;
-          background-image: url('/forest-bg.png');
+          background-image: url('/forest-bg.jpeg');
           background-size: cover;
           background-position: center;
           box-shadow: inset 0 0 300px 150px rgba(2, 8, 4, 0.95);
