@@ -1368,8 +1368,8 @@ export default function HFTGame() {
         .error-box { padding: 10px 14px; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 4px; font-size: 10px; color: #e95e4f; max-width: 440px; width: 100%; }
 
         .build-screen { display: flex; gap: 0; min-height: calc(100vh - 49px); }
-        .build-left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
-        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 49px; max-height: calc(100vh - 49px); overflow-y: auto; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
+        .build-left { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
+        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
         .build-left:hover, .build-right:hover {
           background-color: rgba(2, 6, 4, 0.6);
         }
@@ -1520,7 +1520,7 @@ export default function HFTGame() {
 
         @media (max-width: 700px) {
           .build-screen { flex-direction: column; }
-          .build-right { width: 100%; position: static; border-left: none; border-top: 1px solid rgba(46,204,113,0.1); }
+          .build-right { width: 100%; border-left: none; border-top: 1px solid rgba(46,204,113,0.1); }
           .results-grid { grid-template-columns: 1fr; }
           .bucket-row { grid-template-columns: 120px 60px 1fr 80px; }
         }
