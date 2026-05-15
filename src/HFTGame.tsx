@@ -1035,19 +1035,21 @@ export default function HFTGame() {
   function renderOOS() {
     return (
       <div className="oos-screen">
-        <div className="oos-title">EXECUTING STRATEGY</div>
-        <div className="oos-sub">Out-of-sample day · {meta?.oosRows.toLocaleString() ?? "—"} events</div>
-        <div className="oos-progress-wrap">
-          <div className="oos-progress-bar" style={{ width: `${oosProgress}%` }} />
-        </div>
-        <div className="oos-pct">{oosProgress}%</div>
-        <div className="oos-log">
-          {[...Array(Math.floor(oosProgress / 5))].map((_, i) => (
-            <div key={i} className="oos-log-line">
-              [{new Date(Date.now() - (20 - i) * 3000).toISOString().slice(11, 19)}]{" "}
-              TRADE {gameDirection.toUpperCase()} · bucket matched · forwarded to execution
-            </div>
-          ))}
+        <div className="oos-glass-panel">
+          <div className="oos-title">EXECUTING STRATEGY</div>
+          <div className="oos-sub">Out-of-sample day · {meta?.oosRows.toLocaleString() ?? "—"} events</div>
+          <div className="oos-progress-wrap">
+            <div className="oos-progress-bar" style={{ width: `${oosProgress}%` }} />
+          </div>
+          <div className="oos-pct">{oosProgress}%</div>
+          <div className="oos-log">
+            {[...Array(Math.floor(oosProgress / 5))].map((_, i) => (
+              <div key={i} className="oos-log-line">
+                [{new Date(Date.now() - (20 - i) * 3000).toISOString().slice(11, 19)}]{" "}
+                TRADE {gameDirection.toUpperCase()} · bucket matched · forwarded to execution
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -1071,117 +1073,119 @@ export default function HFTGame() {
 
     return (
       <div className="results-screen">
-        <div className="results-header">
-          <div className="grade-badge" style={{ color: gradeColor, borderColor: gradeColor }}>{grade}</div>
-          <div className="results-title-group">
-            <div className="results-title">{isGood ? "STRATEGY VALIDATED" : "STRATEGY FAILED"}</div>
-            <div className="results-sub">Out-of-sample performance report</div>
-          </div>
-        </div>
-
-        <div className="results-grid">
-          <div className="result-card">
-            <div className="rc-title">IN-SAMPLE EDGE</div>
-            {RETURN_HORIZONS.map(({ key, label }) => (
-              <div key={key} className="rc-row">
-                <span>{label}</span>
-                <span style={{ color: pnlColor(currentStats[key as "r60" | "r300" | "r1800"], directionMult) }}>
-                  {currentStats[key as "r60" | "r300" | "r1800"] >= 0 ? "+" : ""}{currentStats[key as "r60" | "r300" | "r1800"].toFixed(3)} bps
-                </span>
-              </div>
-            ))}
-            <div className="rc-score">Score: {score.toFixed(2)}</div>
-          </div>
-          <div className="result-card highlight">
-            <div className="rc-title">OUT-OF-SAMPLE RESULT</div>
-            {RETURN_HORIZONS.map(({ key, label }) => (
-              <div key={key} className="rc-row">
-                <span>{label}</span>
-                <span style={{ color: pnlColor(stats[key as "r60" | "r300" | "r1800"], directionMult) }}>
-                  {stats[key as "r60" | "r300" | "r1800"] >= 0 ? "+" : ""}{stats[key as "r60" | "r300" | "r1800"].toFixed(3)} bps
-                </span>
-              </div>
-            ))}
-            <div className="rc-score" style={{ color: isGood ? "#27ae60" : "#e74c3c" }}>
-              Score: {oosScore.toFixed(2)}
+        <div className="results-glass-panel">
+          <div className="results-header">
+            <div className="grade-badge" style={{ color: gradeColor, borderColor: gradeColor }}>{grade}</div>
+            <div className="results-title-group">
+              <div className="results-title">{isGood ? "STRATEGY VALIDATED" : "STRATEGY FAILED"}</div>
+              <div className="results-sub">Out-of-sample performance report</div>
             </div>
           </div>
-          <div className="result-card">
-            <div className="rc-title">RULE SUMMARY</div>
-            {allLevels.filter((l) => l.selectedBuckets?.length > 0).map((lvl, i) => {
-              const isFilter = i >= levels.length;
-              const displayIdx = isFilter ? i - levels.length : i;
-              const prefix = isFilter ? "F" : "L";
-              const sourceList = isFilter ? INITIAL_FILTERS : availableAlphas;
-              
-              return (
-              <div key={i} className="rc-rule-row">
-                <span className="rc-rule-depth" style={{ color: isFilter ? "#1abc9c" : "#2ecc71" }}>{prefix}{displayIdx + 1}</span>
-                <span>{sourceList.find((a) => a.id === lvl.alphaId)?.label}</span>
-                <span className="rc-rule-buckets">
-                  {lvl.selectedBuckets.map((bi) => lvl.buckets[bi]?.label).join(", ")}
-                </span>
-              </div>
-              );
-            })}
-            <div className="rc-row">
-              <span>Coverage</span>
-              <span>
-                {coverage.toFixed(1)}% IS / {oosResults.totalRows > 0 ? ((oosResults.n / oosResults.totalRows) * 100).toFixed(1) : 0}% OOS
-              </span>
-            </div>
-          </div>
-        </div>
 
-        <div className="results-verdict">
-          {isGood && overfitRatio > 0.5 && (
-            <div className="verdict good">Strong signal transfer. Your alpha holds out-of-sample. This is the real deal.</div>
-          )}
-          {isGood && overfitRatio <= 0.5 && (
-            <div className="verdict warn">Marginal OOS transfer. You may have over-fit some noise — the edge is thin.</div>
-          )}
-          {!isGood && isGoodIS && (
-            <div className="verdict bad">Strategy collapsed out-of-sample. Classic overfit. Go back and be more selective.</div>
-          )}
-          {!isGood && !isGoodIS && (
-            <div className="verdict bad">Even in-sample was poor. Try different alphas or thresholds.</div>
-          )}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-[#2ecc71]/20 w-full">
-          {oosScore >= MIN_SAVING_THRESHOLD ? (
-            <div className="flex flex-col gap-2 mb-4">
-              <div className="flex flex-col gap-1 mb-1">
-                <span className="text-[10px] text-[#819985] uppercase tracking-widest">Strategy Name</span>
-                <input
-                  className="w-full p-2 bg-black/40 border border-[#2ecc71]/30 text-[#cce3ce] font-mono text-[12px] rounded outline-none focus:border-[#2ecc71] transition-colors"
-                  value={strategyName}
-                  onChange={(e) => setStrategyName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                  placeholder="Name your strategy..."
-                />
-              </div>
-              <button className="btn-primary w-full flex justify-center items-center py-3 text-[14px]" onClick={handleSaveStrategy} disabled={isSaving || saveStatus?.success}>
-                {isSaving ? "SAVING..." : saveStatus?.success ? "✓ STRATEGY ARCHIVED TO CLOUD" : "🚀 EXPORT & SAVE STRATEGY TO CLOUD"}
-              </button>
-              {saveStatus && (
-                <div className={`p-2 text-center rounded ${saveStatus.success ? 'bg-[#27ae60]/20 text-[#2ecc71] border border-[#27ae60]/30' : 'bg-[#e74c3c]/20 text-[#e74c3c] border border-[#e74c3c]/30'}`}>
-                  {saveStatus.message}
+          <div className="results-grid">
+            <div className="result-card">
+              <div className="rc-title">IN-SAMPLE EDGE</div>
+              {RETURN_HORIZONS.map(({ key, label }) => (
+                <div key={key} className="rc-row">
+                  <span>{label}</span>
+                  <span style={{ color: pnlColor(currentStats[key as "r60" | "r300" | "r1800"], directionMult) }}>
+                    {currentStats[key as "r60" | "r300" | "r1800"] >= 0 ? "+" : ""}{currentStats[key as "r60" | "r300" | "r1800"].toFixed(3)} bps
+                  </span>
                 </div>
-              )}
+              ))}
+              <div className="rc-score">Score: {score.toFixed(2)}</div>
             </div>
-          ) : (
-            <div className="p-3 mb-4 bg-black/40 border border-[#e74c3c]/30 rounded flex flex-col gap-1">
-              <span className="text-[#e74c3c] font-bold text-[11px]">🔒 Archive Locked</span>
-              <span className="text-[#819985] text-[9px] leading-relaxed">
-                Out-of-Sample backtest score ({oosScore.toFixed(2)}) must exceed the minimum target threshold benchmark constraint of {MIN_SAVING_THRESHOLD.toFixed(1)} to unlock cloud table pushing pipelines.
-              </span>
+            <div className="result-card highlight">
+              <div className="rc-title">OUT-OF-SAMPLE RESULT</div>
+              {RETURN_HORIZONS.map(({ key, label }) => (
+                <div key={key} className="rc-row">
+                  <span>{label}</span>
+                  <span style={{ color: pnlColor(stats[key as "r60" | "r300" | "r1800"], directionMult) }}>
+                    {stats[key as "r60" | "r300" | "r1800"] >= 0 ? "+" : ""}{stats[key as "r60" | "r300" | "r1800"].toFixed(3)} bps
+                  </span>
+                </div>
+              ))}
+              <div className="rc-score" style={{ color: isGood ? "#27ae60" : "#e74c3c" }}>
+                Score: {oosScore.toFixed(2)}
+              </div>
             </div>
-          )}
-        </div>
+            <div className="result-card">
+              <div className="rc-title">RULE SUMMARY</div>
+              {allLevels.filter((l) => l.selectedBuckets?.length > 0).map((lvl, i) => {
+                const isFilter = i >= levels.length;
+                const displayIdx = isFilter ? i - levels.length : i;
+                const prefix = isFilter ? "F" : "L";
+                const sourceList = isFilter ? INITIAL_FILTERS : availableAlphas;
+                
+                return (
+                <div key={i} className="rc-rule-row">
+                  <span className="rc-rule-depth" style={{ color: isFilter ? "#1abc9c" : "#2ecc71" }}>{prefix}{displayIdx + 1}</span>
+                  <span>{sourceList.find((a) => a.id === lvl.alphaId)?.label}</span>
+                  <span className="rc-rule-buckets">
+                    {lvl.selectedBuckets.map((bi) => lvl.buckets[bi]?.label).join(", ")}
+                  </span>
+                </div>
+                );
+              })}
+              <div className="rc-row">
+                <span>Coverage</span>
+                <span>
+                  {coverage.toFixed(1)}% IS / {oosResults.totalRows > 0 ? ((oosResults.n / oosResults.totalRows) * 100).toFixed(1) : 0}% OOS
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <div className="results-btns">
-          <button className="btn-primary" onClick={() => { setPhase("build"); setOosResults(null); setSaveStatus(null); }}>REFINE STRATEGY</button>
-          <button className="btn-ghost" onClick={startGame}>NEW SIMULATION</button>
+          <div className="results-verdict">
+            {isGood && overfitRatio > 0.5 && (
+              <div className="verdict good">Strong signal transfer. Your alpha holds out-of-sample. This is the real deal.</div>
+            )}
+            {isGood && overfitRatio <= 0.5 && (
+              <div className="verdict warn">Marginal OOS transfer. You may have over-fit some noise — the edge is thin.</div>
+            )}
+            {!isGood && isGoodIS && (
+              <div className="verdict bad">Strategy collapsed out-of-sample. Classic overfit. Go back and be more selective.</div>
+            )}
+            {!isGood && !isGoodIS && (
+              <div className="verdict bad">Even in-sample was poor. Try different alphas or thresholds.</div>
+            )}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#2ecc71]/20 w-full">
+            {oosScore >= MIN_SAVING_THRESHOLD ? (
+              <div className="flex flex-col gap-2 mb-4">
+                <div className="flex flex-col gap-1 mb-1">
+                  <span className="text-[10px] text-[#819985] uppercase tracking-widest">Strategy Name</span>
+                  <input
+                    className="w-full p-2 bg-black/40 border border-[#2ecc71]/30 text-[#cce3ce] font-mono text-[12px] rounded outline-none focus:border-[#2ecc71] transition-colors"
+                    value={strategyName}
+                    onChange={(e) => setStrategyName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                    placeholder="Name your strategy..."
+                  />
+                </div>
+                <button className="btn-primary w-full flex justify-center items-center py-3 text-[14px]" onClick={handleSaveStrategy} disabled={isSaving || saveStatus?.success}>
+                  {isSaving ? "SAVING..." : saveStatus?.success ? "✓ STRATEGY ARCHIVED TO CLOUD" : "🚀 EXPORT & SAVE STRATEGY TO CLOUD"}
+                </button>
+                {saveStatus && (
+                  <div className={`p-2 text-center rounded ${saveStatus.success ? 'bg-[#27ae60]/20 text-[#2ecc71] border border-[#27ae60]/30' : 'bg-[#e74c3c]/20 text-[#e74c3c] border border-[#e74c3c]/30'}`}>
+                    {saveStatus.message}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 mb-4 bg-black/40 border border-[#e74c3c]/30 rounded flex flex-col gap-1">
+                <span className="text-[#e74c3c] font-bold text-[11px]">🔒 Archive Locked</span>
+                <span className="text-[#819985] text-[9px] leading-relaxed">
+                  Out-of-Sample backtest score ({oosScore.toFixed(2)}) must exceed the minimum target threshold benchmark constraint of {MIN_SAVING_THRESHOLD.toFixed(1)} to unlock cloud table pushing pipelines.
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="results-btns">
+            <button className="btn-primary" onClick={() => { setPhase("build"); setOosResults(null); setSaveStatus(null); }}>REFINE STRATEGY</button>
+            <button className="btn-ghost" onClick={startGame}>NEW SIMULATION</button>
+          </div>
         </div>
       </div>
     );
@@ -1500,7 +1504,23 @@ export default function HFTGame() {
         .preview-bucket-ret { min-width: 70px; text-align: right; }
         .editor-btns { display: flex; gap: 10px; }
 
-        .oos-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 49px); padding: 40px 24px; gap: 28px; }
+        .oos-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 49px); padding: 40px 24px; }
+        .oos-glass-panel {
+          display: flex; flex-direction: column; align-items: center; gap: 28px;
+          background: rgba(6, 15, 10, 0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 64px 40px;
+          box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+          animation: emergeFromFog 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: translateY(20px);
+          width: 100%;
+          max-width: 700px;
+        }
         .oos-title { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: 6px; color: #f1c40f; }
         .oos-sub { font-size: 11px; color: #55735b; letter-spacing: 2px; }
         .oos-progress-wrap { width: 100%; max-width: 500px; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
@@ -1509,7 +1529,21 @@ export default function HFTGame() {
         .oos-log { width: 100%; max-width: 600px; height: 160px; overflow-y: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(241,196,15,0.1); border-radius: 4px; padding: 10px 12px; font-size: 9px; color: #55735b; display: flex; flex-direction: column; gap: 2px; }
         .oos-log-line { color: #6a8a70; }
 
-        .results-screen { max-width: 860px; margin: 0 auto; padding: 36px 24px; display: flex; flex-direction: column; gap: 28px; }
+        .results-screen { max-width: 900px; margin: 40px auto; padding: 0 24px; display: flex; flex-direction: column; }
+        .results-glass-panel {
+          display: flex; flex-direction: column; gap: 28px;
+          background: rgba(6, 15, 10, 0.45);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 48px;
+          box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+          animation: emergeFromFog 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: translateY(20px);
+        }
         .results-header { display: flex; align-items: center; gap: 24px; }
         .grade-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 72px; font-weight: 800; border: 3px solid; border-radius: 8px; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
         .results-title { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #cce3ce; }
