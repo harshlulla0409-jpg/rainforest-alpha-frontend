@@ -226,7 +226,7 @@ export function AmbientAudioToggle() {
         </svg>
       )}
       <span className="audio-label">
-        {isMuted ? 'AUDIO OFF' : `ENV 0${currentTrackIndex + 1}`}
+        {isMuted ? 'CLICK FOR BIRDSONGS' : `BIRDS 0${currentTrackIndex + 1}`}
       </span>
     </button>
   );
