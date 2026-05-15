@@ -1,5 +1,10 @@
 import HFTGame from "./HFTGame";
+import { AudioProvider } from "./AudioContext";
 
 export default function App() {
-  return <HFTGame />;
+  return (
+    <AudioProvider>
+      <HFTGame />
+    </AudioProvider>
+  );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useAudio } from './AudioContext';
 
 const INITIAL_ALPHAS = [
   { id: "lead_score_slow", label: "Lead Score Slow", desc: "" },
@@ -199,6 +200,38 @@ function getMetricConfig(id: string) {
   if (id.includes("lot_size")) return { label: "Thresholds (units comma seperated)", mult: 1, suffix: "units" };
   return { label: "Thresholds (bps, comma-separated)", mult: 1, suffix: "bps" };
 }
+
+// ── Audio Component ───────────────────────────────────────────────────────────
+
+export function AmbientAudioToggle() {
+  const { isMuted, currentTrackIndex, toggleAudio } = useAudio();
+
+  return (
+    <button 
+      onClick={toggleAudio}
+      className={`audio-toggle-btn ${!isMuted ? 'active' : ''}`}
+      title={isMuted ? "Play Ambient Audio" : `Playing Track ${currentTrackIndex + 1}`}
+    >
+      {isMuted ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+      )}
+      <span className="audio-label">
+        {isMuted ? 'AUDIO OFF' : `ENV 0${currentTrackIndex + 1}`}
+      </span>
+    </button>
+  );
+}
+
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -511,15 +544,12 @@ export default function HFTGame() {
   }
 
   async function handleSaveStrategy() {
-    // DIAGNOSTIC 1: Confirm the click action successfully registers
-    alert("Save button clicked! Beginning payload validation...");
-
     // The OAuth provider or local storage might not explicitly return `.id` depending on the backend schema. Fallback safely.
     console.log("Current user state object:", user); // Check F12 Console to see exactly what keys your backend returned
     
     const currentUserId = user?.id || (user as any)?._id || (user as any)?.username || (user as any)?.login || "anonymous_user";
     if (!currentUserId) {
-      alert("Save halted: user identity could not be resolved.");
+      setSaveStatus({ success: false, message: "Save halted: user identity could not be resolved." });
       return;
     }
     
@@ -537,6 +567,11 @@ export default function HFTGame() {
         };
       });
 
+      let currentOosScore = 0;
+      if (oosResults) {
+        currentOosScore = (oosResults.stats.r60 * 1 + oosResults.stats.r300 * 0.7 + oosResults.stats.r1800 * 0.4) * directionMult;
+      }
+
       const payload = {
         userId: currentUserId,
         signalName: strategyName || "unnamed_signal",
@@ -545,6 +580,7 @@ export default function HFTGame() {
         isRSquared: activeModelData?.isRSquared ?? activeModelData?.rSquared ?? 0, 
         oosRSquared: activeModelData?.oosRSquared ?? 0,
         intercept: activeModelData?.intercept ?? 0,
+        oosScore: currentOosScore,
         coefficients: activeModelData?.coefficients ?? {},
         oosBucketData: activeModelData?.oosBucketData ?? [], 
         activeWorkspaceLevels
@@ -557,7 +593,6 @@ export default function HFTGame() {
       console.log("Server Network Response:", res);
       
       if (res && res.status === "success") {
-        alert("Success! Server accepted the save transaction.");
         setSaveStatus({ success: true, message: res.message || "Strategy exported successfully!" });
         if (typeof fetchUserStrategies === 'function') {
           fetchUserStrategies(); 
@@ -566,9 +601,7 @@ export default function HFTGame() {
         setSaveStatus({ success: false, message: res?.message || "Server rejected the save transaction." });
       }
     } catch (e: any) {
-      // DIAGNOSTIC 4: Force a browser alert display of the exact crash trace line
       console.error("CRITICAL EXCEPTION IN HANDLER:", e);
-      alert(`FRONTEND EXCEPTION CAUGHT: ${e.message}\nStack: ${e.stack}`);
       setSaveStatus({ success: false, message: `Frontend Crash: ${String(e)}` });
     } finally {
       setIsSaving(false);
@@ -877,9 +910,10 @@ export default function HFTGame() {
                       <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded">{strat.targetHorizon}</span>
                     </div>
                     <div className="flex gap-3 text-[9px] mt-1 bg-black/20 p-1.5 rounded border border-[#2ecc71]/10">
-                       <div className="flex flex-col"><span className="text-[#55735b]">SCORE</span><span className={`font-bold ${strat.oosScore > 0 ? "text-[#27ae60]" : "text-[#e74c3c]"}`}>{strat.oosScore != null ? (strat.oosScore >= 0 ? "+" : "") + strat.oosScore.toFixed(2) : "—"}</span></div>
-                       <div className="flex flex-col"><span className="text-[#55735b]">IS R²</span><span className="text-[#cce3ce]">{(strat.isRSquared * 100).toFixed(1)}%</span></div>
-                       <div className="flex flex-col"><span className="text-[#55735b]">OOS R²</span><span className="text-[#f1c40f]">{(strat.oosRSquared || 0).toFixed(1)}%</span></div>
+                      <div className="flex flex-col">
+                        <span className="text-[#55735b]">SCORE</span>
+                        <span className={`font-bold ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>{strat.oosScore > 0 ? '+' : ''}{strat.oosScore != null ? strat.oosScore.toFixed(2) : "0.00"}</span>
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1 mt-1 border-t border-[#2ecc71]/10 pt-2">
                       <div className="text-[8px] text-[#55735b] uppercase tracking-widest mb-1">Rule Summary</div>
@@ -1241,6 +1275,7 @@ export default function HFTGame() {
           )}
         </div>
         <div className="hud-right">
+          <AmbientAudioToggle />
           {phase === "build" && (
             <>
               <div className="hud-stat"><span>IS rows</span><span>{meta?.isRows.toLocaleString() ?? "—"}</span></div>
@@ -1322,6 +1357,31 @@ export default function HFTGame() {
         .hud-stat { display: flex; flex-direction: column; align-items: flex-end; }
         .hud-stat span:first-child { font-size: 9px; color: #55735b; letter-spacing: 1px; }
         .hud-stat span:last-child { font-size: 13px; color: #cce3ce; }
+
+        .audio-toggle-btn {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #819985;
+          padding: 6px 12px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 1px;
+          transition: all 0.3s ease; backdrop-filter: blur(8px);
+        }
+        .audio-toggle-btn:hover {
+          color: #cce3ce; background: rgba(255, 255, 255, 0.08);
+        }
+        .audio-toggle-btn.active {
+          color: #2ecc71; border-color: rgba(46, 204, 113, 0.3);
+          background: rgba(46, 204, 113, 0.05);
+          box-shadow: 0 0 10px rgba(46, 204, 113, 0.1);
+          animation: audioPulse 4s infinite alternate ease-in-out;
+        }
+        @keyframes audioPulse {
+          0% { box-shadow: 0 0 5px rgba(46, 204, 113, 0.05); }
+          100% { box-shadow: 0 0 15px rgba(46, 204, 113, 0.2); }
+        }
 
         .intro-screen {
           display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
