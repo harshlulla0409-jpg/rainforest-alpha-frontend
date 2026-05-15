@@ -1251,7 +1251,7 @@ export default function HFTGame() {
         #root, .game-root {
           min-height: 100vh;
           /* The Background Image */
-          background-image: url('/forest-bg.jpg'); 
+          background-image: url('/forest-bg.png'); 
           background-size: cover;
           background-position: center;
           background-attachment: fixed;
