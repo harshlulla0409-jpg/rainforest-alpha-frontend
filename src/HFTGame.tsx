@@ -902,23 +902,20 @@ export default function HFTGame() {
                 No archived strategies linked to this account yet.
               </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-2">
                 {savedStrategies.map((strat, i) => (
-                  <div key={i} className="p-3 bg-black/40 border border-[#2ecc71]/20 rounded flex flex-col gap-2 group transition-colors hover:border-[#2ecc71]/40">
-                    <div className="flex justify-between items-start border-b border-[#2ecc71]/10 pb-2 mb-1">
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-[11px] font-bold text-[#2ecc71] max-w-[120px] truncate" title={strat.signalName}>{strat.signalName}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded w-fit">{strat.targetHorizon}</span>
-                      </div>
+                  <div key={i} className="p-4 bg-black/40 border border-[#2ecc71]/20 rounded-lg flex flex-col gap-3 group transition-colors hover:border-[#2ecc71]/40">
+                    <div className="flex justify-between items-center border-b border-[#2ecc71]/10 pb-3">
+                      <span className="text-[12px] font-bold text-[#2ecc71] max-w-[130px] truncate" title={strat.signalName}>{strat.signalName}</span>
                       <div className="flex flex-col items-end">
-                        <span className="text-[#55735b] text-[8px] tracking-widest">SCORE</span>
-                        <span className={`text-[12px] font-bold ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>
+                        <span className="text-[#55735b] text-[8px] tracking-widest mb-0.5">SCORE</span>
+                        <span className={`text-[14px] font-bold leading-none ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>
                           {strat.oosScore > 0 ? '+' : ''}{strat.oosScore != null ? strat.oosScore.toFixed(2) : "0.00"}
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <div className="text-[8px] text-[#55735b] uppercase tracking-widest mb-0.5">Rule Summary</div>
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[9px] text-[#55735b] uppercase tracking-widest mb-1">Rule Summary</div>
                       {(() => {
                         let alphaCount = 0;
                         let filterCount = 0;
@@ -944,18 +941,18 @@ export default function HFTGame() {
                             }
                           }
                           return (
-                            <div key={idx} className="flex justify-between items-center text-[9px] leading-tight mb-1">
-                              <div className="flex gap-1.5 items-center">
-                                <span className="px-1 py-0.5 rounded bg-black/30" style={{ color: isFilter ? "#1abc9c" : "#2ecc71", fontWeight: "bold", fontSize: "8px" }}>{prefix}{displayIdx}</span>
-                                <span className="text-[#819985] max-w-[80px] truncate" title={alphaName}>{alphaName}</span>
+                            <div key={idx} className="flex justify-between items-center text-[9px] leading-tight mb-1.5">
+                              <div className="flex gap-2 items-center">
+                                <span className="px-1.5 py-0.5 rounded bg-black/30" style={{ color: isFilter ? "#1abc9c" : "#2ecc71", fontWeight: "bold", fontSize: "9px" }}>{prefix}{displayIdx}</span>
+                                <span className="text-[#819985] max-w-[90px] truncate" title={alphaName}>{alphaName}</span>
                               </div>
-                              <span className="text-[#cce3ce] text-right text-[8px] max-w-[80px] truncate" title={labels.join(", ")}>{labels.join(", ")}</span>
+                              <span className="text-[#cce3ce] text-right text-[9px] max-w-[90px] truncate" title={labels.join(", ")}>{labels.join(", ")}</span>
                             </div>
                           );
                         });
                       })()}
                     </div>
-                    <button className="w-full py-1.5 mt-2 text-[9px] font-mono tracking-widest text-[#819985] bg-transparent border border-transparent hover:text-[#2ecc71] hover:bg-[#2ecc71]/10 rounded transition-colors" onClick={() => loadWorkspace(strat)}>
+                    <button className="w-full py-2 mt-1 text-[10px] font-mono tracking-widest text-[#819985] bg-transparent border border-transparent hover:text-[#2ecc71] hover:bg-[#2ecc71]/10 rounded transition-colors" onClick={() => loadWorkspace(strat)}>
                       ⚡ LOAD INTO WORKSPACE
                     </button>
                   </div>
@@ -1481,7 +1478,7 @@ export default function HFTGame() {
 
         .build-screen { display: flex; gap: 0; min-height: calc(100vh - 49px); }
         .build-left { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
-        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
+        .build-right { width: 280px; padding: 24px 20px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; background-color: rgba(2, 6, 4, 0); transition: background-color 0.8s ease, box-shadow 0.4s ease; }
         .build-left:hover, .build-right:hover {
           background-color: rgba(2, 6, 4, 0.6);
         }
