@@ -226,7 +226,7 @@ export default function HFTGame() {
 
   const [regressionFeatures, setRegressionFeatures] = useState<string[]>([]);
   const [regressionTarget, setRegressionTarget] = useState<string>("r60");
-  const [regressionName, setRegressionName] = useState<string>("custom_alpha");
+  const [strategyName, setStrategyName] = useState<string>("custom_strategy");
   const [regressionResults, setRegressionResults] = useState<RegressionResult | null>(null);
   const [isRegressionLoading, setIsRegressionLoading] = useState(false);
 
@@ -358,7 +358,7 @@ export default function HFTGame() {
       setEditingState(null);
       setRegressionFeatures([]);
       setRegressionTarget("r60");
-      setRegressionName("custom_alpha");
+      setStrategyName("custom_strategy");
       setRegressionResults(null);
       setActiveModelData(null);
       setSaveStatus(null);
@@ -451,6 +451,11 @@ export default function HFTGame() {
     setApiError(null);
     setSaveStatus(null);
 
+    // Dynamically generate a strategy name based on constituents if left as default
+    if (strategyName === "custom_strategy" || strategyName === "custom_alpha" || !strategyName.trim()) {
+      setStrategyName(`strategy${savedStrategies.length + 1}`);
+    }
+
     // Fire OOS API call immediately — animate in parallel
     const isFilterStage = filters.length > 0;
     const lastLvl = isFilterStage ? filters[filters.length - 1] : levels[levels.length - 1];
@@ -486,15 +491,15 @@ export default function HFTGame() {
     setApiError(null);
     try {
       const currentUserId = user?.id || (user as any)?._id || (user as any)?.username || (user as any)?.login || "anonymous_user";
-      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, regressionName, currentUserId);
+      const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, strategyName, currentUserId);
       setRegressionResults(data);
       setActiveModelData(data);
       setSaveStatus(null);
       
-      if (!availableAlphas.find((a) => a.id === regressionName)) {
+      if (!availableAlphas.find((a) => a.id === strategyName)) {
         setAvailableAlphas((prev) => [...prev, {
-          id: regressionName,
-          label: regressionName,
+          id: strategyName,
+          label: strategyName,
           desc: `OLS on ${regressionTarget}`
         }]);
       }
@@ -534,7 +539,7 @@ export default function HFTGame() {
 
       const payload = {
         userId: currentUserId,
-        signalName: regressionName || "unnamed_signal",
+        signalName: strategyName || "unnamed_signal",
         targetHorizon: regressionTarget || "r60",
         features: regressionFeatures || [],
         isRSquared: activeModelData?.isRSquared ?? activeModelData?.rSquared ?? 0, 
@@ -578,7 +583,7 @@ export default function HFTGame() {
     setOosResults(null);
     setRegressionTarget(strategy.targetHorizon || "r60");
     setRegressionFeatures(strategy.features || []);
-    setRegressionName((strategy.signalName || "loaded_signal") + "_v2");
+    setStrategyName((strategy.signalName || "loaded_signal") + "_v2");
 
     try {
       let currentLevels: Level[] = [];
@@ -849,19 +854,55 @@ export default function HFTGame() {
                 No archived strategies linked to this account yet.
               </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
                 {savedStrategies.map((strat, i) => (
                   <div key={i} className="p-2.5 bg-black/40 border border-[#2ecc71]/20 rounded flex flex-col gap-2 group transition-colors hover:border-[#2ecc71]/40">
                     <div className="flex justify-between items-start">
                       <span className="text-[11px] font-bold text-[#2ecc71] max-w-[120px] truncate" title={strat.signalName}>{strat.signalName}</span>
                       <span className="text-[9px] px-1.5 py-0.5 bg-[#2ecc71]/10 text-[#2ecc71] rounded">{strat.targetHorizon}</span>
                     </div>
-                    <div className="flex gap-4 text-[9px]">
+                    <div className="flex gap-3 text-[9px] mt-1 bg-black/20 p-1.5 rounded border border-[#2ecc71]/10">
+                       <div className="flex flex-col"><span className="text-[#55735b]">SCORE</span><span className={`font-bold ${strat.oosScore > 0 ? "text-[#27ae60]" : "text-[#e74c3c]"}`}>{strat.oosScore != null ? (strat.oosScore >= 0 ? "+" : "") + strat.oosScore.toFixed(2) : "—"}</span></div>
                        <div className="flex flex-col"><span className="text-[#55735b]">IS R²</span><span className="text-[#cce3ce]">{(strat.isRSquared * 100).toFixed(1)}%</span></div>
-                       <div className="flex flex-col"><span className="text-[#55735b]">OOS R²</span><span className="text-[#f1c40f] font-bold">{(strat.oosRSquared || 0).toFixed(1)}%</span></div>
+                       <div className="flex flex-col"><span className="text-[#55735b]">OOS R²</span><span className="text-[#f1c40f]">{(strat.oosRSquared || 0).toFixed(1)}%</span></div>
                     </div>
-                    <div className="text-[8px] text-[#819985] line-clamp-2 leading-relaxed">
-                      Features: {(strat.features || []).join(", ")}
+                    <div className="flex flex-col gap-1 mt-1 border-t border-[#2ecc71]/10 pt-2">
+                      <div className="text-[8px] text-[#55735b] uppercase tracking-widest mb-1">Rule Summary</div>
+                      {(() => {
+                        let alphaCount = 0;
+                        let filterCount = 0;
+                        return strat.activeWorkspaceLevels?.map((lvl: any, idx: number) => {
+                          const isFilter = INITIAL_FILTERS.some(f => f.id === lvl.alphaId);
+                          const sourceList = isFilter ? INITIAL_FILTERS : INITIAL_ALPHAS;
+                          const alphaName = sourceList.find(a => a.id === lvl.alphaId)?.label || lvl.alphaId;
+                          
+                          let displayIdx;
+                          if (isFilter) { filterCount++; displayIdx = filterCount; } 
+                          else { alphaCount++; displayIdx = alphaCount; }
+                          
+                          const prefix = isFilter ? "F" : "L";
+                          const mult = getMetricConfig(lvl.alphaId).mult;
+                          const displayThresh = (lvl.thresholds || []).map((t: number) => t / mult);
+                          const labels = [];
+                          const sel = lvl.selectedBuckets || [];
+                          for (let j = 0; j <= displayThresh.length; j++) {
+                            if (sel.includes(j)) {
+                              if (j === 0) labels.push(`<${displayThresh[0]}`);
+                              else if (j === displayThresh.length) labels.push(`>${displayThresh[displayThresh.length - 1]}`);
+                              else labels.push(`${displayThresh[j - 1]} to ${displayThresh[j]}`);
+                            }
+                          }
+                          return (
+                            <div key={idx} className="flex justify-between items-start text-[8px] leading-tight mb-0.5">
+                              <div className="flex gap-1">
+                                <span style={{ color: isFilter ? "#1abc9c" : "#2ecc71", fontWeight: "bold" }}>{prefix}{displayIdx}</span>
+                                <span className="text-[#819985]">{alphaName}</span>
+                              </div>
+                              <span className="text-[#55735b] text-right max-w-[90px] truncate" title={labels.join(", ")}>{labels.join(", ")}</span>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                     <button className="btn-secondary w-full py-1.5 mt-1 text-[9px] bg-[#2ecc71]/5 border-[#2ecc71]/30 hover:bg-[#2ecc71]/20" onClick={() => loadWorkspace(strat)}>
                       ⚡ LOAD INTO WORKSPACE
@@ -946,13 +987,13 @@ export default function HFTGame() {
               <span className="text-[9px] text-[#55735b] tracking-widest uppercase">Signal Name</span>
               <input
                 className="w-full p-1.5 bg-black/30 border border-[#2ecc71]/20 text-[#cce3ce] font-mono text-[11px] rounded outline-none focus:border-[#2ecc71] transition-colors"
-                value={regressionName}
-                onChange={(e) => setRegressionName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                value={strategyName}
+                onChange={(e) => setStrategyName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
                 placeholder="e.g. alpha_1"
               />
             </div>
 
-            <button className="btn-secondary w-full" onClick={runRegression} disabled={isRegressionLoading || regressionFeatures.length === 0 || !regressionName.trim()}>
+            <button className="btn-secondary w-full" onClick={runRegression} disabled={isRegressionLoading || regressionFeatures.length === 0 || !strategyName.trim()}>
               {isRegressionLoading ? "RUNNING..." : "RUN OLS REGRESSION"}
             </button>
 
@@ -1108,6 +1149,15 @@ export default function HFTGame() {
         <div className="mt-4 pt-4 border-t border-[#2ecc71]/20 w-full">
           {oosScore >= MIN_SAVING_THRESHOLD ? (
             <div className="flex flex-col gap-2 mb-4">
+              <div className="flex flex-col gap-1 mb-1">
+                <span className="text-[10px] text-[#819985] uppercase tracking-widest">Strategy Name</span>
+                <input
+                  className="w-full p-2 bg-black/40 border border-[#2ecc71]/30 text-[#cce3ce] font-mono text-[12px] rounded outline-none focus:border-[#2ecc71] transition-colors"
+                  value={strategyName}
+                  onChange={(e) => setStrategyName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                  placeholder="Name your strategy..."
+                />
+              </div>
               <button className="btn-primary w-full flex justify-center items-center py-3 text-[14px]" onClick={handleSaveStrategy} disabled={isSaving || saveStatus?.success}>
                 {isSaving ? "SAVING..." : saveStatus?.success ? "✓ STRATEGY ARCHIVED TO CLOUD" : "🚀 EXPORT & SAVE STRATEGY TO CLOUD"}
               </button>
