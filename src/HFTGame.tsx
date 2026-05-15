@@ -1248,16 +1248,31 @@ export default function HFTGame() {
           overflow-x: hidden;
         }
 
-        #root, .game-root {
+        #root {
           min-height: 100vh;
-          /* The Background Image */
-          background-image: url('/forest-bg.png'); 
+        }
+
+        .game-root {
+          position: relative;
+          min-height: 100vh;
+          overflow: hidden;
+        }
+
+        .game-root::before {
+          content: "";
+          position: fixed;
+          top: -5%; left: -5%; right: -5%; bottom: -5%;
+          z-index: -1;
+          background-image: url('/forest-bg.png');
           background-size: cover;
           background-position: center;
-          background-attachment: fixed;
-          
-          /* The dark cinematic vignette to make panels readable */
           box-shadow: inset 0 0 300px 150px rgba(2, 8, 4, 0.95);
+          animation: slowBreathe 40s ease-in-out infinite alternate;
+        }
+
+        @keyframes slowBreathe {
+          0% { transform: scale(1); }
+          100% { transform: scale(1.05); }
         }
 
         .hud {
@@ -1298,12 +1313,26 @@ export default function HFTGame() {
         .btn-primary, .btn-secondary, .btn-ghost, .btn-fire, .btn-xs, .btn-danger {
           cursor: pointer; border: none; font-family: 'Space Mono', monospace; transition: all 0.15s;
         }
-        .btn-primary {
-          padding: 10px 24px; font-size: 12px; letter-spacing: 2px;
-          background: #2ecc71; color: #061208; font-weight: 700; border-radius: 3px;
+        .btn-primary, .btn-fire {
+          background: rgba(46, 204, 113, 0.05); /* Almost completely transparent */
+          color: #ffffff;
+          border: 1px solid rgba(46, 204, 113, 0.4);
+          backdrop-filter: blur(8px);
+          border-radius: 4px;
+          padding: 14px 32px;
+          font-family: 'Outfit', sans-serif;
+          font-weight: 400;
+          letter-spacing: 3px;
+          transition: all 0.3s ease;
+          box-shadow: none;
+        }
+        .btn-primary:hover:not(:disabled), .btn-fire:hover {
+          background: rgba(46, 204, 113, 0.15);
+          border-color: #2ecc71;
+          box-shadow: 0 0 20px rgba(46, 204, 113, 0.2), inset 0 0 10px rgba(46, 204, 113, 0.1);
+          transform: translateY(-1px);
         }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-        .btn-primary:hover:not(:disabled) { background: #27ae60; transform: translateY(-1px); }
         .btn-big { padding: 14px 40px; font-size: 14px; }
         .btn-secondary {
           padding: 10px 20px; font-size: 11px; letter-spacing: 2px;
@@ -1323,12 +1352,8 @@ export default function HFTGame() {
         .btn-danger { color: #e74c3c !important; border-color: rgba(231,76,60,0.3) !important; }
         .btn-danger:hover { color: #e95e4f !important; background: rgba(231,76,60,0.1) !important; }
         .btn-fire {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 16px 28px; background: linear-gradient(135deg, #d35400, #c0392b);
-          color: #fff; border-radius: 4px; width: 100%;
-          box-shadow: 0 0 24px rgba(211,84,0,0.3);
+          display: flex; flex-direction: column; align-items: center; width: 100%;
         }
-        .btn-fire:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(211,84,0,0.5); }
         .btn-fire-main { font-size: 14px; font-weight: 700; letter-spacing: 3px; }
         .btn-fire-sub { font-size: 10px; letter-spacing: 1px; opacity: 0.8; margin-top: 4px; }
 
@@ -1343,10 +1368,15 @@ export default function HFTGame() {
         .error-box { padding: 10px 14px; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); border-radius: 4px; font-size: 10px; color: #e95e4f; max-width: 440px; width: 100%; }
 
         .build-screen { display: flex; gap: 0; min-height: calc(100vh - 49px); }
-        .build-left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; transition: box-shadow 0.4s ease; }
-        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 49px; max-height: calc(100vh - 49px); overflow-y: auto; transition: box-shadow 0.4s ease; }
+        .build-left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; transition: background-color 0.8s ease, backdrop-filter 0.8s ease, -webkit-backdrop-filter 0.8s ease, box-shadow 0.4s ease; }
+        .build-right { width: 240px; padding: 20px 16px; border-left: 1px solid rgba(46,204,113,0.1); display: flex; flex-direction: column; gap: 16px; position: sticky; top: 49px; max-height: calc(100vh - 49px); overflow-y: auto; transition: background-color 0.8s ease, backdrop-filter 0.8s ease, -webkit-backdrop-filter 0.8s ease, box-shadow 0.4s ease; }
+        .build-left:hover, .build-right:hover {
+          background-color: rgba(2, 6, 4, 0.7);
+          backdrop-filter: blur(32px);
+          -webkit-backdrop-filter: blur(32px);
+        }
         .build-left.workspace-glow, .build-right.workspace-glow { box-shadow: inset 0 0 40px rgba(46,204,113,0.15), 0 0 20px rgba(46,204,113,0.1), inset 0 0 0 1px rgba(46,204,113,0.8); }
-        .build-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #2ecc71; }
+        .build-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 4px; color: #ffffff; }
         .build-subtitle { font-size: 9px; letter-spacing: 2px; color: #55735b; margin-top: 2px; }
 
         .stats-panel, .level-card, .editor-panel, .result-card {
@@ -1359,7 +1389,18 @@ export default function HFTGame() {
           padding: 24px;
           box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
         }
-        .level-card { overflow: hidden; }
+        .level-card { 
+          overflow: hidden;
+          animation: emergeFromFog 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        @keyframes emergeFromFog {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .level-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(46,204,113,0.06); border-bottom: 1px solid rgba(46,204,113,0.1); }
         .level-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: #2ecc71; min-width: 28px; }
         .filter-badge { color: #1abc9c; }
@@ -1379,14 +1420,14 @@ export default function HFTGame() {
         .bucket-row.selected { background: rgba(39,174,96,0.05); border-left: 3px solid #27ae60; }
         .bucket-row.long:hover { background: rgba(39,174,96,0.04); }
         .bucket-row.short:hover { background: rgba(231,76,60,0.04); }
-        .bucket-label { font-size: 10px; color: #819985; letter-spacing: 0.5px; }
+        .bucket-label { font-family: 'Space Mono', monospace; font-size: 10px; color: #819985; letter-spacing: 0.5px; }
         .bucket-n { font-size: 9px; color: #55735b; }
         .bucket-bars { display: flex; flex-direction: column; gap: 4px; }
         .bar-row { display: flex; align-items: center; gap: 6px; }
         .bar-label { font-size: 8px; color: #55735b; min-width: 28px; }
         .bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; position: relative; }
         .bar-fill { position: absolute; top: 0; height: 100%; border-radius: 2px; transition: width 0.3s; }
-        .bar-val { font-size: 9px; min-width: 48px; text-align: right; }
+        .bar-val { font-family: 'Space Mono', monospace; font-size: 9px; min-width: 48px; text-align: right; }
         .bucket-select-indicator { font-size: 9px; letter-spacing: 1px; text-align: center; padding: 3px 8px; border-radius: 2px; border: 1px solid; }
         .bucket-select-indicator.on { color: #27ae60; border-color: rgba(39,174,96,0.4); background: rgba(39,174,96,0.08); }
         .bucket-select-indicator.off { color: #2a4a30; border-color: rgba(42,74,48,0.4); }
@@ -1395,18 +1436,26 @@ export default function HFTGame() {
         .max-depth-msg { font-size: 10px; color: #55735b; letter-spacing: 1px; }
         .hint-box { font-size: 11px; color: #55735b; padding: 12px; background: rgba(46,204,113,0.03); border: 1px dashed rgba(46,204,113,0.15); border-radius: 4px; text-align: center; line-height: 1.6; }
 
-        .stats-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: #4a9062; margin-bottom: 10px; }
+        .stats-title { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 4px; color: #ffffff; margin-bottom: 10px; }
         .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 10px; }
         .stats-label { color: #55735b; }
         .stats-val { color: #cce3ce; }
         .stats-divider { height: 1px; background: rgba(46,204,113,0.1); margin: 8px 0; }
         .stats-score { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; }
-        .stats-score.positive { color: #27ae60; }
+        .stats-score.positive {
+          color: #2ecc71;
+          text-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+          animation: dataPulse 4s infinite alternate;
+        }
+        @keyframes dataPulse {
+          0% { text-shadow: 0 0 5px rgba(46, 204, 113, 0.1); }
+          100% { text-shadow: 0 0 20px rgba(46, 204, 113, 0.6), 0 0 40px rgba(46, 204, 113, 0.2); }
+        }
         .stats-score.negative { color: #e74c3c; }
         .coverage-bar-wrap { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 10px; }
         .coverage-bar { height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); border-radius: 2px; transition: width 0.5s; }
 
-        .editor-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 3px; color: #2ecc71; margin-bottom: 16px; }
+        .editor-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 400; letter-spacing: 4px; color: #ffffff; margin-bottom: 16px; }
         .editor-row { margin-bottom: 14px; }
         .editor-row label { display: block; font-size: 9px; letter-spacing: 1px; color: #55735b; margin-bottom: 6px; }
         .alpha-select-grid { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1440,7 +1489,7 @@ export default function HFTGame() {
         .results-sub { font-size: 10px; color: #55735b; letter-spacing: 2px; margin-top: 4px; }
         .results-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
         .result-card.highlight { background: rgba(39,174,96,0.04); border-color: rgba(39,174,96,0.2); }
-        .rc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 2px; color: #4a9062; margin-bottom: 12px; }
+        .rc-title { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 4px; color: #ffffff; margin-bottom: 12px; }
         .rc-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(46,204,113,0.05); }
         .rc-score { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-top: 10px; color: #cce3ce; }
         .rc-rule-row { display: flex; align-items: flex-start; gap: 8px; font-size: 10px; padding: 4px 0; border-bottom: 1px solid rgba(46,204,113,0.05); }
