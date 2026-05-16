@@ -731,7 +731,7 @@ export default function HFTGame() {
                 <div className="bucket-n">n={b.n.toLocaleString()}</div>
                 <div className="bucket-bars">
                   {RETURN_HORIZONS.map(({ key, label }) => {
-                    const v = b[key as "r60" | "r300" | "r1800"];
+                    const v = b[key as "r60" | "r300" | "r1800"] || 0;
                     return (
                       <div key={key} className="bar-row">
                         <span className="bar-label">{label}</span>
@@ -825,7 +825,7 @@ export default function HFTGame() {
                   <span className="preview-bucket-label">{b.label}</span>
                   <span className="preview-bucket-n">n={b.n}</span>
                   <span className="preview-bucket-ret" style={{ color: pnlColor(b.r60, directionMult) }}>
-                    60s: {b.r60 >= 0 ? "+" : ""}{b.r60.toFixed(2)}
+                    60s: {(b.r60 || 0) >= 0 ? "+" : ""}{(b.r60 || 0).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -909,8 +909,8 @@ export default function HFTGame() {
                       <span className="text-[12px] font-bold text-[#2ecc71] max-w-[130px] truncate" title={strat.signalName}>{strat.signalName}</span>
                       <div className="flex flex-col items-end">
                         <span className="text-[#55735b] text-[8px] tracking-widest mb-0.5">SCORE</span>
-                        <span className={`text-[14px] font-bold leading-none ${strat.oosScore >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>
-                          {strat.oosScore > 0 ? '+' : ''}{strat.oosScore != null ? strat.oosScore.toFixed(2) : "0.00"}
+                        <span className={`text-[14px] font-bold leading-none ${(strat.oosScore || 0) >= 0 ? "text-[#2ecc71]" : "text-[#e74c3c]"}`}>
+                          {(strat.oosScore || 0) > 0 ? '+' : ''}{(strat.oosScore || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -1047,16 +1047,16 @@ export default function HFTGame() {
 
             {activeModelData && (
               <div className="mt-2 pt-3 border-t border-[#2ecc71]/10 text-[10px] flex flex-col gap-1 text-[#cce3ce]">
-                <div className="flex justify-between text-[#819985]"><span>IS R-Squared</span> <span className="text-[#cce3ce]">{(activeModelData.rSquared * 100).toFixed(2)}%</span></div>
+                <div className="flex justify-between text-[#819985]"><span>IS R-Squared</span> <span className="text-[#cce3ce]">{((activeModelData.rSquared ?? activeModelData.isRSquared ?? 0) * 100).toFixed(2)}%</span></div>
                 {activeModelData.oosRSquared !== undefined && (
-                  <div className="flex justify-between text-[#819985]"><span>OOS R-Squared</span> <span className="text-[#f1c40f]">{activeModelData.oosRSquared.toFixed(1)}%</span></div>
+                  <div className="flex justify-between text-[#819985]"><span>OOS R-Squared</span> <span className="text-[#f1c40f]">{(activeModelData.oosRSquared || 0).toFixed(1)}%</span></div>
                 )}
-                <div className="flex justify-between text-[#819985]"><span>Intercept</span> <span className="text-[#cce3ce]">{activeModelData.intercept.toFixed(4)}</span></div>
+                <div className="flex justify-between text-[#819985]"><span>Intercept</span> <span className="text-[#cce3ce]">{(activeModelData.intercept || 0).toFixed(4)}</span></div>
                 <div className="text-[#55735b] mt-2 mb-1 border-b border-[#2ecc71]/10 pb-1">Coefficients</div>
                 {Object.entries(activeModelData.coefficients || {}).map(([k, v]: [string, any]) => (
                   <div key={k} className="flex justify-between items-center">
                     <span className="text-[#819985] text-[9px] truncate max-w-[100px]" title={k}>{k}</span>
-                    <span className={v >= 0 ? "text-[#27ae60]" : "text-[#e74c3c]"}>{v >= 0 ? '+' : ''}{v.toFixed(4)}</span>
+                    <span className={(v || 0) >= 0 ? "text-[#27ae60]" : "text-[#e74c3c]"}>{(v || 0) >= 0 ? '+' : ''}{(v || 0).toFixed(4)}</span>
                   </div>
                 ))}
               </div>
