@@ -524,7 +524,12 @@ export default function HFTGame() {
     setApiError(null);
     try {
       const currentUserId = user?.id || (user as any)?._id || (user as any)?.username || (user as any)?.login || "anonymous_user";
+      
+      console.log(`[DEBUG] Sending Regression Request. Features:`, regressionFeatures, `Target:`, regressionTarget);
+      
       const data = await apiRunRegression("is", directionMult as 1 | -1, regressionFeatures, regressionTarget, strategyName, currentUserId);
+      console.log(`[DEBUG] Raw Regression Response from Backend:`, data);
+      
       setRegressionResults(data);
       setActiveModelData(data);
       setSaveStatus(null);
