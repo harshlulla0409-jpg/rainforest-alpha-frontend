@@ -363,8 +363,8 @@ export default function HFTGame() {
         const data = await apiFetchBuckets(
           "is", sideVal, alphaId, actualThresholds, upstream, 
           isCurrentlyRegressedAlpha, 
-          isCurrentlyRegressedAlpha ? activeModelData?.coefficients : null, 
-          isCurrentlyRegressedAlpha ? activeModelData?.intercept : 0.0
+          isCurrentlyRegressedAlpha ? (activeModelData?.coefficients || {}) : {}, 
+          isCurrentlyRegressedAlpha ? (activeModelData?.intercept || 0.0) : 0.0
         );
         setPreviewData({ buckets: data.buckets, filteredRows: data.filteredRows });
     } catch {
@@ -450,8 +450,8 @@ export default function HFTGame() {
       const data = await apiFetchBuckets(
         "is", directionMult as 1 | -1, pendingAlpha, actualThresholds, upstream,
         isCurrentlyRegressedAlpha,
-        isCurrentlyRegressedAlpha ? activeModelData?.coefficients : null,
-        isCurrentlyRegressedAlpha ? activeModelData?.intercept : 0.0
+        isCurrentlyRegressedAlpha ? (activeModelData?.coefficients || {}) : {},
+        isCurrentlyRegressedAlpha ? (activeModelData?.intercept || 0.0) : 0.0
       );
       const newLvl: Level = {
         alphaId: pendingAlpha,
@@ -518,8 +518,8 @@ export default function HFTGame() {
       const data = await apiFetchBuckets(
         "oos", directionMult as 1 | -1, lastLvl.alphaId, lastLvl.thresholds, upstream,
         isCurrentlyRegressedAlpha,
-        isCurrentlyRegressedAlpha ? activeModelData?.coefficients : null,
-        isCurrentlyRegressedAlpha ? activeModelData?.intercept : 0.0
+        isCurrentlyRegressedAlpha ? (activeModelData?.coefficients || {}) : {},
+        isCurrentlyRegressedAlpha ? (activeModelData?.intercept || 0.0) : 0.0
       );
       const stats = aggStats(data.buckets, lastLvl.selectedBuckets);
       oosResultData = { stats, n: stats.n, totalRows: data.totalRows };
@@ -659,8 +659,8 @@ export default function HFTGame() {
         const data = await apiFetchBuckets(
           "is", directionMult as 1 | -1, lvl.alphaId, lvl.thresholds, upstream,
           isCurrentlyRegressedAlpha,
-          isCurrentlyRegressedAlpha ? strategy.coefficients : null,
-          isCurrentlyRegressedAlpha ? strategy.intercept : 0.0
+          isCurrentlyRegressedAlpha ? (strategy.coefficients || {}) : {},
+          isCurrentlyRegressedAlpha ? (strategy.intercept || 0.0) : 0.0
         );
         
         const fullLvl: Level = {
